@@ -4,8 +4,7 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers.
 #endif
 
-#include <windows.h>
-
+#include <Windows.h>
 // C RunTime Header Files
 #include <stdlib.h>
 #include <sstream>
@@ -31,3 +30,6 @@
 #ifdef _DEBUG
 #include <dxgidebug.h>
 #endif
+
+#include "DXHelper.h"
+#include "DeviceResources.h"

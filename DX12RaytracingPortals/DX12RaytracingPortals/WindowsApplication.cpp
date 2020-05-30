@@ -170,6 +170,108 @@ void WindowsApplication::WindowZOrder(bool top)
 
 LRESULT CALLBACK WindowsApplication::WindowProccess(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param)
 {
+    System* system = reinterpret_cast<System*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
+    switch (message)
+    {
+    case WM_CREATE:
+    {
+        // Save the DXSample* passed in to CreateWindow.
+        LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(l_param);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+    }
+    return 0;
+
+    case WM_KEYDOWN:
+        if (system)
+        {
+            system->KeyDown(static_cast<UINT8>(w_param));
+        }
+        return 0;
+
+    case WM_KEYUP:
+        if (system)
+        {
+            system->KeyUp(static_cast<UINT8>(w_param));
+        }
+        return 0;
+
+    case WM_SYSKEYDOWN:
+        // Send all other WM_SYSKEYDOWN messages to the default WndProc.
+        break;
+
+    case WM_PAINT:
+        if (system)
+        {
+            system->Update();
+            //system->OnRender();
+        }
+        return 0;
+
+    case WM_SIZE:
+        if (system)
+        {
+            RECT windowRect = {};
+            GetWindowRect(hwnd, &windowRect);
+            system->SetWindowBounds(windowRect.left, windowRect.top, windowRect.right, windowRect.bottom);
+
+            RECT clientRect = {};
+            GetClientRect(hwnd, &clientRect);
+            system->WindowSizeChanged(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, w_param == SIZE_MINIMIZED);
+        }
+        return 0;
+
+    case WM_MOVE:
+        if (system)
+        {
+            RECT windowRect = {};
+            GetWindowRect(hwnd, &windowRect);
+            system->SetWindowBounds(windowRect.left, windowRect.top, windowRect.right, windowRect.bottom);
+
+            int xPos = (int)(short)LOWORD(l_param);
+            int yPos = (int)(short)HIWORD(l_param);
+            system->WindowMoved(xPos, yPos);
+        }
+        return 0;
+
+    case WM_DISPLAYCHANGE:
+        if (system)
+        {
+            system->DisplayChanged();
+        }
+        return 0;
+
+    case WM_MOUSEMOVE:
+        if (system && static_cast<UINT8>(w_param) == MK_LBUTTON)
+        {
+            UINT x = LOWORD(l_param);
+            UINT y = HIWORD(l_param);
+            system->MouseMoved(x, y);
+        }
+        return 0;
+
+    case WM_LBUTTONDOWN:
+    {
+        UINT x = LOWORD(l_param);
+        UINT y = HIWORD(l_param);
+        system->LeftButtonDown(x, y);
+    }
+    return 0;
+
+    case WM_LBUTTONUP:
+    {
+        UINT x = LOWORD(l_param);
+        UINT y = HIWORD(l_param);
+        system->LeftButtonUp(x, y);
+    }
+    return 0;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+
+    // Handle any messages the switch statement didn't.
+    return DefWindowProc(hwnd, message, w_param, l_param);
 }
 

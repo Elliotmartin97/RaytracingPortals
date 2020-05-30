@@ -3,41 +3,59 @@
 #include "Windows.h"
 #include "DeviceResources.h"
 #include "DXHelper.h"
+#include "HLSLRaytracingShader.h"
+#include "Raytracer.h"
 
 class System : public DX::IDeviceNotify
 {
 public:
 	System(UINT width_param, UINT height_param, std::wstring name);
-	virtual ~System();
+	~System();
 
-	virtual void Init() = 0;
-	virtual void OnUpdate() = 0;
-	virtual void Render() = 0;
-	virtual void WindowSizeChanged(UINT width, UINT height, bool minimized) = 0;
-	virtual void Destroy() = 0;
+	void WindowSizeChanged(UINT width, UINT height, bool minimized);
+	void Init();
+	void Destroy();
+	void Update();
 
-	virtual void KeyDown(UINT8) {}
-	virtual void KeyUP(UINT8) {}
-	virtual void WindowMoved(int, int) {}
-	virtual void MouseMoved(UINT, UINT) {}
-	virtual void LeftButtonDown(UINT, UINT) {}
-	virtual void LeftButtonUp(UINT, UINT) {}
-	virtual void DisplayChanged() {}
+	void KeyDown(UINT8) {}
+	void KeyUp(UINT8) {}
+	void WindowMoved(int, int) {}
+	void MouseMoved(UINT, UINT) {}
+	void LeftButtonDown(UINT, UINT) {}
+	void LeftButtonUp(UINT, UINT) {}
+	void DisplayChanged() {}
+	inline bool CheckRaytracingSupported(IDXGIAdapter1* adapter);
 
-	virtual void ParseCLA(_In_reads_(argc) WCHAR* argv[], int argc);
+	void ParseCLA(_In_reads_(argc) WCHAR* argv[], int argc);
+	virtual void OnDeviceLost() override;
+	virtual void OnDeviceRestored() override;
 
 	UINT GetWidth() const { return width; }
 	UINT GetHeight() const { return height; }
 	const WCHAR* GetTitle() const { return title.c_str(); }
 	RECT GetWindowBounds() const { return window_bounds; }
-	virtual IDXGISwapChain* GetSwapChain() { return nullptr; }
+	IDXGISwapChain* GetSwapChain() { return device_resources->GetSwapChain(); }
 	DX::DeviceResources* GetDeviceResources() const { return device_resources.get(); }
 
 	void UpdateSizeChange(UINT width, UINT height);
 	void SetWindowBounds(int left, int top, int right, int bottom);
 	std::wstring GetAssetFullPath(LPCWSTR name);
-protected:
+
+	UINT GetWidth() { return width; }
+	UINT GetHeight() { return height; }
 	void SetCustomWindowText(LPCWSTR text);
+protected:
+	static const UINT frame_count = 3;
+
+	//constant buffers
+	static_assert(sizeof(SceneConstantBuffer) < D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, "Checking the size here.");
+	union AlignedSceneConstantBuffer
+	{
+		SceneConstantBuffer constants;
+		uint8_t alignmentPadding[D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT];
+	};
+	AlignedSceneConstantBuffer* mapped_constant_data;
+	ComPtr<ID3D12Resource>       per_frame_constants;
 
 	UINT width;
 	UINT height;
@@ -50,5 +68,6 @@ protected:
 private:
 	std::wstring asset_path;
 	std::wstring title;
+	Raytracer* raytracer;
 
 };
