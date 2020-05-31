@@ -1,9 +1,11 @@
 #include "System.h"
 #include "WindowsApplication.h"
 #include "DeviceResources.h"
+#include "Raytracer.h"
 
 System::System(UINT width_param, UINT height_param, std::wstring name)
 {
+	raytracer = new Raytracer(*device_resources, frame_count);
 	width = width_param;
 	height = height_param;
 	window_bounds = { 0,0,0,0 };

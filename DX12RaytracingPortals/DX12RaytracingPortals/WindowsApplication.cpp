@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "WindowsApplication.h"
 #include "DXHelper.h"
+#include "DXRHelper.h"
 
 HWND WindowsApplication::hwnd = nullptr;
 bool WindowsApplication::fullscreen_mode = false;

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Windows.h"
+#include "WindowsApplication.h"
 #include "DeviceResources.h"
 #include "DXHelper.h"
 #include "HLSLRaytracingShader.h"
-#include "Raytracer.h"
+
+class Raytracer;
 
 class System : public DX::IDeviceNotify
 {
@@ -65,9 +66,9 @@ protected:
 	bool enable_UI;
 	UINT adapter_ID_override;
 	std::unique_ptr<DX::DeviceResources> device_resources;
+	Raytracer* raytracer;
 private:
 	std::wstring asset_path;
 	std::wstring title;
-	Raytracer* raytracer;
 
 };

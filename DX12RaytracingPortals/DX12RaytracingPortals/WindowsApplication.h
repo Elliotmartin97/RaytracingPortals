@@ -1,5 +1,6 @@
 #pragma once
 #include "System.h"
+#include "stdafx.h"
 #include "d3dx12.h"
 
 class System;

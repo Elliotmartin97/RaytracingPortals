@@ -3,6 +3,7 @@
 #include "AccelerationStructure.h"
 #include "DXRHelper.h"
 #include "Raytracing.hlsl.h"
+#include "System.h"
 
 
 Raytracer::Raytracer(DX::DeviceResources& resources, int f_count)
@@ -131,17 +132,17 @@ void Raytracer::CreateRootSignatures()
 	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);  // 1 output texture
 	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // 2 static index and vertex buffers.
 
-	CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
-	rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &ranges[0]);
-	rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);
-	rootParameters[GlobalRootSignatureParams::SceneConstantSlot].InitAsConstantBufferView(0);
-	rootParameters[GlobalRootSignatureParams::VertexBuffersSlot].InitAsDescriptorTable(1, &ranges[1]);
-	CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+	CD3DX12_ROOT_PARAMETER global_root_params[GlobalRootSignatureParams::Count];
+	global_root_params[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &ranges[0]);
+	global_root_params[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);
+	global_root_params[GlobalRootSignatureParams::SceneConstantSlot].InitAsConstantBufferView(0);
+	global_root_params[GlobalRootSignatureParams::VertexBuffersSlot].InitAsDescriptorTable(1, &ranges[1]);
+	CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(global_root_params), global_root_params);
 	SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &raytrace_global_root_signature);
 
-	CD3DX12_ROOT_PARAMETER rootParameters[LocalRootSignatureParams::Count];
-	rootParameters[LocalRootSignatureParams::CubeConstantSlot].InitAsConstants(SizeOfInUint32(m_cubeCB), 1);
-	CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+	CD3DX12_ROOT_PARAMETER local_root_params[LocalRootSignatureParams::Count];
+	local_root_params[LocalRootSignatureParams::CubeConstantSlot].InitAsConstants(SizeOfInUint32(m_cubeCB), 1);
+	CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(local_root_params), local_root_params);
 	localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 	SerializeAndCreateRaytracingRootSignature(localRootSignatureDesc, &raytrace_local_root_signature);
 }
@@ -677,7 +678,7 @@ void Raytracer::OnSizeChanged(UINT width, UINT height, bool minimized)
 		return;
 	}
 
-	UpdateForSizeChange(width, height);
+	system->UpdateSizeChange(width, height);
 
 	ReleaseWindowSizeDependentResources();
 	CreateWindowSizeDependentResources();

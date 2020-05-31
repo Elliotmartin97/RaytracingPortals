@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "DeviceResources.h"
 #include "WindowsApplication.h"
-#include <dxgidebug.h>
 
 //*********************************************************
 //

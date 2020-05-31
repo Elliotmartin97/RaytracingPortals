@@ -19,6 +19,13 @@ namespace LocalRootSignatureParams {
     };
 }
 
+class System;
+
+static const wchar_t* hit_group_name;
+static const wchar_t* ray_shader_name;
+static const wchar_t* closest_hit_name;
+static const wchar_t* miss_shader_name;
+
 class Raytracer
 {
 public:
@@ -50,7 +57,6 @@ private:
     void BuildGeometry();
     void BuildAccelerationStructures();
     void BuildShaderTables();
-    void UpdateForSizeChange(UINT width, UINT height);
     void CopyRaytracingOutputToBackbuffer();
     void CalculateFrameStats();
     UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpu_descriptor, UINT descriptor_index = UINT_MAX);
@@ -89,10 +95,6 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE raytracing_gpu_descriptor;
     UINT raytracing_descriptor_index;
 
-    static const wchar_t* hit_group_name;
-    static const wchar_t* ray_shader_name;
-    static const wchar_t* closest_hit_name;
-    static const wchar_t* miss_shader_name;
     ComPtr<ID3D12Resource> miss_shader_table;
     ComPtr<ID3D12Resource> hit_group_table;
     ComPtr<ID3D12Resource> ray_shader_table;

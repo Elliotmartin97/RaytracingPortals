@@ -30,26 +30,23 @@
     <ClInclude Include="WindowsApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AccelerationStructure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Raytracer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="System.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HLSLRaytracingShader.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
     <ClInclude Include="DXRHelper.h">
       <Filter>Header Files\DXUtilites</Filter>
     </ClInclude>
-    <ClInclude Include="Raytracing.hlsl.h">
-      <Filter>Resource Files</Filter>
+    <ClInclude Include="Raytracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HLSLRaytracingShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HlslCompat.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -71,7 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Raytracing.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Header Files</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
