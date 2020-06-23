@@ -38,6 +38,7 @@ void Raytracer::CreateRootSignatures(DX::DeviceResources *device_resources)
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);  // 1 output texture
         ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // 2 static index and vertex buffers.
 
+
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &ranges[0]);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);
@@ -179,6 +180,24 @@ void Raytracer::CreateRaytracingOutputResource(DX::DeviceResources* device_resou
     m_raytracingOutputResourceUAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptor_heap_index, m_descriptorSize);
 }
 
+void Raytracer::BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, std::vector<Index> &scene_indices, std::vector<Vertex> &scene_vertices)
+{
+    auto device = device_resources->GetD3DDevice();
+
+    //// Cube indices.
+    int i_count = scene_indices.size();
+    int v_count = scene_vertices.size();
+
+    AllocateUploadBuffer(device, &scene_indices[0], i_count * 2, &raytracer->GetIndexBuffer()->resource);
+    AllocateUploadBuffer(device, &scene_vertices[0], (sizeof(XMFLOAT3) * 2) * v_count, &raytracer->GetVertexBuffer()->resource);
+
+    // Vertex buffer is passed to the shader along with index buffer as a descriptor table.
+    // Vertex buffer descriptor must follow index buffer descriptor in the descriptor heap.
+    UINT descriptorIndexIB = raytracer->CreateBufferSRV(device_resources, raytracer->GetIndexBuffer(), (i_count * 2) / 4, 0);
+    UINT descriptorIndexVB = raytracer->CreateBufferSRV(device_resources, raytracer->GetVertexBuffer(), v_count, sizeof(XMFLOAT3) * 2);
+    ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index!");
+}
+
 void Raytracer::CreateDescriptorHeap(DX::DeviceResources* device_resources)
 {
     auto device = device_resources->GetD3DDevice();
@@ -238,7 +257,7 @@ UINT Raytracer::CreateBufferSRV(DX::DeviceResources* device_resources, D3DBuffer
 void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width, UINT height, ComPtr<ID3D12Resource> m_topLevelAccelerationStructure)
 {
     auto commandList = device_resourcecs->GetCommandList();
-    auto frameIndex = device_resourcecs->GetCurrentFrameIndex();
+    UINT frameIndex = device_resourcecs->GetCurrentFrameIndex();
 
     auto DispatchRays = [&](auto* commandList, auto* stateObject, auto* dispatchDesc)
     {
@@ -258,7 +277,6 @@ void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width,
         commandList->DispatchRays(dispatchDesc);
     };
 
-
     commandList->SetComputeRootSignature(m_raytracingGlobalRootSignature.Get());
 
     // Copy the updated scene constant buffer to GPU.
@@ -271,7 +289,6 @@ void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width,
 
     commandList->SetDescriptorHeaps(1, m_descriptorHeap.GetAddressOf());
     // Set index and successive vertex buffer decriptor tables
-
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffersSlot, m_indexBuffer.gpuDescriptorHandle);
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutputResourceUAVGpuDescriptor);
 
@@ -394,10 +411,8 @@ void Raytracer::ReleaseRaytracerResources()
     m_descriptorHeap.Reset();
     m_descriptorsAllocated = 0;
     descriptor_heap_index = UINT_MAX;
-
     m_indexBuffer.resource.Reset();
     m_vertexBuffer.resource.Reset();
-
     m_perFrameConstants.Reset();
     m_rayGenShaderTable.Reset();
     m_missShaderTable.Reset();

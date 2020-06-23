@@ -147,7 +147,8 @@ void Model::LoadModelFromOBJ(std::string file_name)
     }
 }
 
-void Model::LoadModelFromPLY(std::string file_name)
+void Model::LoadModelFromPLY(std::string file_name, std::vector<Index> &scene_indices, std::vector<Vertex> &scene_vertices, std::vector<int> &index_counts,
+    std::vector<int> &vertex_counts, std::vector<int> &index_start_positions, std::vector<int> &vertex_start_positions)
 {
     std::string line;
     std::ifstream file;
@@ -182,58 +183,20 @@ void Model::LoadModelFromPLY(std::string file_name)
             }
         }
     }
-
     file.close();
 
-    //if (index_offsets.empty())
-    //{
-    //    index_offsets.resize(1);
-    //    index_offsets[0] = 0;
-    //    vertex_offsets.resize(1);
-    //    vertex_offsets[0] = 0;
-    //}
-    //else
-    //{
-    //    index_offsets.resize(index_offsets.size() + 1);
-    //    index_offsets[index_offsets.size() - 1] = scene_indices.size();
-    //    vertex_offsets.resize(vertex_offsets.size() + 1);
-    //    vertex_offsets[vertex_offsets.size() - 1] = scene_vertices.size();
-    //}
-
-    //scene_indices.insert(scene_indices.end(), model_indices.begin(), model_indices.end());
-    //scene_vertices.insert(scene_vertices.end(), model_vertices.begin(), model_vertices.end());
-
-}
-
-void Model::BuildGeometry(DX::DeviceResources* device_resources, Raytracer* raytracer)
-{
-    auto device = device_resources->GetD3DDevice();
-
-    //// Cube indices.
-    int i_count = model_indices.size();
-    int v_count  = model_vertices.size();
-
-    std::vector<Index> inds;
-    inds.resize(i_count);
-    for (int i = 0; i < i_count; i++)
+    scene_indices.insert(scene_indices.end(), model_indices.begin(), model_indices.end());
+    scene_vertices.insert(scene_vertices.end(), model_vertices.begin(), model_vertices.end());
+    index_counts.push_back(model_indices.size());
+    vertex_counts.push_back(model_vertices.size());
+    if (index_start_positions.empty())
     {
-        inds[i] = model_indices[i];
+        index_start_positions.push_back(0);
+        vertex_start_positions.push_back(0);
     }
-    std::vector<Vertex> verts;
-    verts.resize(v_count);
-
-    int test = sizeof(size_t);
-    for (int i = 0; i < v_count; i++)
+    else
     {
-        verts[i] = model_vertices[i];
+        index_start_positions.push_back(scene_indices.size() - model_indices.size());
+        vertex_start_positions.push_back(scene_vertices.size() - model_vertices.size());
     }
-
-    AllocateUploadBuffer(device, &inds[0], i_count * 2, &raytracer->GetIndexBuffer()->resource);
-    AllocateUploadBuffer(device, &verts[0], (sizeof(XMFLOAT3) * 2) * v_count, &raytracer->GetVertexBuffer()->resource);
-
-    // Vertex buffer is passed to the shader along with index buffer as a descriptor table.
-    // Vertex buffer descriptor must follow index buffer descriptor in the descriptor heap.
-    UINT descriptorIndexIB = raytracer->CreateBufferSRV(device_resources, raytracer->GetIndexBuffer(), (i_count * 2) / 4, 0);
-    UINT descriptorIndexVB = raytracer->CreateBufferSRV(device_resources, raytracer->GetVertexBuffer(), v_count, sizeof(XMFLOAT3) * 2);
-    ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index!");
 }

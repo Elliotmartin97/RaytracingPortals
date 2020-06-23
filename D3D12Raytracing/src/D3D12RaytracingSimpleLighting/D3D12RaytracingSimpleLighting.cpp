@@ -27,8 +27,9 @@ D3D12RaytracingSimpleLighting::D3D12RaytracingSimpleLighting(UINT width, UINT he
     m_curRotationAngleRad = 0.0f;
     raytracer = new Raytracer(m_raytracingOutputResourceUAVDescriptorHeapIndex);
     acceleration_structure = new AccelerationStructure();
-    cube_model = new Model();
+    model1 = new Model();
     model2 = new Model();
+    model3 = new Model();
     UpdateForSizeChange(width, height);
 }
 
@@ -143,16 +144,14 @@ void D3D12RaytracingSimpleLighting::CreateDeviceDependentResources()
     // Create a heap for descriptors.
     raytracer->CreateDescriptorHeap(m_deviceResources.get());
 
-    scene_indicies.resize(1);
     // Build geometry to be used in the sample.
-    cube_model->LoadModelFromPLY("Models/bigtorus.ply");
-    cube_model->BuildGeometry(m_deviceResources.get(), raytracer);
-   // model2->LoadModelFromPLY("Models/cube.ply", index_buffer_offsets, vertex_buffer_offsets, scene_indicies, scene_vertices);
-    //model2->BuildGeometry(m_deviceResources.get(), raytracer, index_buffer_offsets, vertex_buffer_offsets, scene_indicies, scene_vertices);
-    //geometry_descs.resize(index_buffer_offsets.size());
-    // Build raytracing acceleration structures from the generated geometry.
-   // acceleration_structure->BuildGeometryDescs(raytracer, geometry_descs, index_buffer_offsets, vertex_buffer_offsets);
-    acceleration_structure->BuildAccelerationStructures(m_deviceResources.get(), raytracer);
+    model1->LoadModelFromPLY("Models/cube.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    //model2->LoadModelFromPLY("Models/cube2.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+   // model3->LoadModelFromPLY("Models/cube2.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    raytracer->BuildGeometryBuffers(m_deviceResources.get(), raytracer, scene_indices, scene_vertices);
+
+    acceleration_structure->BuildAccelerationStructures(raytracer, m_deviceResources.get(), index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+
 
     // Create constant buffers for the geometry and the scene.
     raytracer->CreateConstantBuffers(m_deviceResources.get());
@@ -267,10 +266,14 @@ void D3D12RaytracingSimpleLighting::OnDestroy()
     m_deviceResources->WaitForGpu();
     OnDeviceLost();
 
-    delete cube_model;
-    cube_model = nullptr;
+    delete model1;
+    model1 = nullptr;
     delete model2;
     model2 = nullptr;
+    delete model3;
+    model3 = nullptr;
+    _CrtDumpMemoryLeaks();
+
 }
 
 // Release all device dependent resouces when a device is lost.

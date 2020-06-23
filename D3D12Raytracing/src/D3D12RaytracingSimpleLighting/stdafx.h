@@ -21,8 +21,12 @@
 
 #include <windows.h>
 
-// C RunTime Header Files
+//debug
+#define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
+#include <crtdbg.h>
+
+// C RunTime Header Files
 #include <sstream>
 #include <iomanip>
 

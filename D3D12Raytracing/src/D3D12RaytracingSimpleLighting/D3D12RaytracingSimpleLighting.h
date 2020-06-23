@@ -1,5 +1,4 @@
 #pragma once
-
 #include "DXSample.h"
 #include "StepTimer.h"
 #include "RaytracingHlslCompat.h"
@@ -49,11 +48,6 @@ private:
     XMVECTOR m_eye;
     XMVECTOR m_at;
     XMVECTOR m_up;
-    std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometry_descs;
-    std::vector<int> index_buffer_offsets;
-    std::vector<int> vertex_buffer_offsets;
-    std::vector<Index> scene_indicies;
-    std::vector<Vertex> scene_vertices;
     void UpdateCameraMatrices();
     void InitializeScene();
     void RecreateD3D();
@@ -66,6 +60,13 @@ private:
     void CalculateFrameStats();
     Raytracer* raytracer;
     AccelerationStructure* acceleration_structure;
-    Model* cube_model;
+    std::vector<Index> scene_indices;
+    std::vector<Vertex> scene_vertices;
+    std::vector<int> index_counts;
+    std::vector<int> vertex_counts;
+    std::vector<int> index_start_positions;
+    std::vector<int> vertex_start_positions;
+    Model* model1;
     Model* model2;
+    Model* model3;
 };
