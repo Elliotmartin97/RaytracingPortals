@@ -25,6 +25,8 @@ union AlignedSceneConstantBuffer
 	uint8_t alignmentPadding[D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT];
 };
 
+class Scene;
+
 class Raytracer
 {
 public:
@@ -42,7 +44,7 @@ public:
 	void BuildShaderTables(DX::DeviceResources* device_resources);
 	void ReleaseRaytracerResources();
 	void CopyRaytracingOutputToBackbuffer(DX::DeviceResources* device_resources);
-	void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, std::vector<Index> &scene_indices, std::vector<Vertex> &scene_vertices);
+	void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene *scene);
 	UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse = UINT_MAX);
 	UINT CreateBufferSRV(DX::DeviceResources* device_resources, D3DBuffer* buffer, UINT numElements, UINT elementSize);
 	ComPtr<ID3D12Device5> GetDXRDevice() { return m_dxrDevice; }

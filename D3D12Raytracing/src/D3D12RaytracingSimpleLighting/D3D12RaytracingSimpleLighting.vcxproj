@@ -165,6 +165,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="Raytracer.h" />
     <ClInclude Include="RaytracingHlslCompat.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Win32Application.h" />
     <ClInclude Include="D3D12RaytracingSimpleLighting.h" />
@@ -178,6 +179,7 @@
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Raytracer.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Win32Application.cpp" />
     <ClCompile Include="D3D12RaytracingSimpleLighting.cpp" />
     <ClCompile Include="DXSample.cpp" />

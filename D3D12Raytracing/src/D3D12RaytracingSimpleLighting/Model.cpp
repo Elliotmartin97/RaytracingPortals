@@ -152,7 +152,7 @@ void Model::LoadModelFromPLY(std::string file_name, std::vector<Index> &scene_in
 {
     std::string line;
     std::ifstream file;
-    file.open(file_name);
+    file.open("Models/" + file_name + ".ply");
 
     if (file.is_open())
     {

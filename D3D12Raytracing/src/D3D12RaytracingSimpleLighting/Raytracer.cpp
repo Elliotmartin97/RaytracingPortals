@@ -3,6 +3,7 @@
 #include "DirectXRaytracingHelper.h"
 #include "Raytracing.hlsl.h"
 #include "RayTracingHlslCompat.h"
+#include "Scene.h"
 
 using namespace DirectX;
 
@@ -180,16 +181,16 @@ void Raytracer::CreateRaytracingOutputResource(DX::DeviceResources* device_resou
     m_raytracingOutputResourceUAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptor_heap_index, m_descriptorSize);
 }
 
-void Raytracer::BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, std::vector<Index> &scene_indices, std::vector<Vertex> &scene_vertices)
+void Raytracer::BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene* scene)
 {
     auto device = device_resources->GetD3DDevice();
 
     //// Cube indices.
-    int i_count = scene_indices.size();
-    int v_count = scene_vertices.size();
+    int i_count = scene->GetSceneIndices().size();
+    int v_count = scene->GetSceneVertices().size();
 
-    AllocateUploadBuffer(device, scene_indices.data(), i_count * sizeof(int), &raytracer->GetIndexBuffer()->resource);
-    AllocateUploadBuffer(device, scene_vertices.data(), v_count * sizeof(Vertex), &raytracer->GetVertexBuffer()->resource);
+    AllocateUploadBuffer(device, scene->GetSceneIndices().data(), i_count * sizeof(int), &raytracer->GetIndexBuffer()->resource);
+    AllocateUploadBuffer(device, scene->GetSceneVertices().data(), v_count * sizeof(Vertex), &raytracer->GetVertexBuffer()->resource);
 
     // Vertex buffer is passed to the shader along with index buffer as a descriptor table.
     // Vertex buffer descriptor must follow index buffer descriptor in the descriptor heap.

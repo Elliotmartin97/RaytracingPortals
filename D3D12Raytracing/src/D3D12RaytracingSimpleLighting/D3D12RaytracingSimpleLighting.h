@@ -7,6 +7,7 @@
 class Model;
 class Raytracer;
 class AccelerationStructure;
+class Scene;
 
 class D3D12RaytracingSimpleLighting : public DXSample
 {
@@ -60,16 +61,5 @@ private:
     void CalculateFrameStats();
     Raytracer* raytracer;
     AccelerationStructure* acceleration_structure;
-    std::vector<Index> scene_indices;
-    std::vector<Vertex> scene_vertices;
-    std::vector<int> index_counts;
-    std::vector<int> vertex_counts;
-    std::vector<int> index_start_positions;
-    std::vector<int> vertex_start_positions;
-    Model* model1;
-    Model* model2;
-    Model* model3;
-    Model* model4;
-    Model* model5;
-    Model* model6;
+    Scene* scene;
 };

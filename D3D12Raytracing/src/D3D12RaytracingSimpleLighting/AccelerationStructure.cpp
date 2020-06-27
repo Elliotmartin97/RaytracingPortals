@@ -2,6 +2,7 @@
 #include "DirectXRaytracingHelper.h"
 #include "AccelerationStructure.h"
 #include "Raytracer.h"
+#include "Scene.h"
 
 AccelerationStructure::AccelerationStructure() {}
 
@@ -26,7 +27,8 @@ void AccelerationStructure::BuildGeometryDescsForBottomLevelAS(Raytracer* raytra
     }
 }
 
-void AccelerationStructure::BuildBottomLevelASInstanceDescs(DX::DeviceResources* device_resources, std::vector<D3D12_GPU_VIRTUAL_ADDRESS> bottomLevelASaddresses, ComPtr<ID3D12Resource>* instanceDescsResource)
+void AccelerationStructure::BuildBottomLevelASInstanceDescs(DX::DeviceResources* device_resources, std::vector<D3D12_GPU_VIRTUAL_ADDRESS> bottomLevelASaddresses,
+    ComPtr<ID3D12Resource>* instanceDescsResource, Scene* scene)
 {
     auto device = device_resources->GetD3DDevice();
 
@@ -38,24 +40,23 @@ void AccelerationStructure::BuildBottomLevelASInstanceDescs(DX::DeviceResources*
         instanceDescs[i].InstanceMask = 1;
         instanceDescs[i].InstanceContributionToHitGroupIndex = 0;
         instanceDescs[i].AccelerationStructure = bottomLevelASaddresses[i];
-        XMFLOAT3 float_position = XMFLOAT3( 0.0f, 0.0f, i * 3.0f);
-        const XMVECTOR vBasePosition = XMLoadFloat3(&float_position);
 
-        // Scale in XZ dimensions.
-        XMMATRIX mScale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-        XMMATRIX mTranslation = XMMatrixTranslationFromVector(vBasePosition);
-        XMMATRIX mTransform = mScale * mTranslation;
+        XMMATRIX mScale = XMMatrixScalingFromVector(scene->GetSceneModels()[i].GetScale());
+        XMMATRIX mTranslation = XMMatrixTranslationFromVector(scene->GetSceneModels()[i].GetPosition());
+        XMMATRIX mRotation = XMMatrixRotationRollPitchYawFromVector(scene->GetSceneModels()[i].GetRotation());
+        XMMATRIX mTransform = mScale * mRotation * mTranslation;
+        ZeroMemory(instanceDescs[i].Transform, sizeof(instanceDescs[i].Transform));
         XMStoreFloat3x4(reinterpret_cast<XMFLOAT3X4*>(instanceDescs[i].Transform), mTransform);
     }
     UINT64 bufferSize = static_cast<UINT64>(instanceDescs.size() * sizeof(instanceDescs[0]));
     AllocateUploadBuffer(device, instanceDescs.data(), bufferSize, &(*instanceDescsResource), L"InstanceDescs");
 }
 
-AccelerationStructureBuffers AccelerationStructure::BuildTopLevelAS(DX::DeviceResources* device_resources, Raytracer* raytracer,
-    std::vector<int> index_counts, std::vector<int> vertex_counts, int num_blas, std::vector<AccelerationStructureBuffers> bottomLevelAS)
+AccelerationStructureBuffers AccelerationStructure::BuildTopLevelAS(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene* scene, std::vector<AccelerationStructureBuffers> bottomLevelAS)
 {
     auto device = device_resources->GetD3DDevice();
     auto commandList = device_resources->GetCommandList();
+    int num_blas = scene->GetIndexCounts().size();
     ComPtr<ID3D12Resource> scratch;
     ComPtr<ID3D12Resource> topLevelAS;
 
@@ -94,7 +95,7 @@ AccelerationStructureBuffers AccelerationStructure::BuildTopLevelAS(DX::DeviceRe
         bottomLevelASaddresses[i] = bottomLevelAS[i].accelerationStructure->GetGPUVirtualAddress();
     }
         
-    BuildBottomLevelASInstanceDescs(device_resources, bottomLevelASaddresses, &instanceDescsResource);
+    BuildBottomLevelASInstanceDescs(device_resources, bottomLevelASaddresses, &instanceDescsResource, scene);
     
 
     // Top-level AS desc
@@ -159,15 +160,14 @@ AccelerationStructureBuffers AccelerationStructure::BuildBottomLevelAS(DX::Devic
     return bottomLevelASBuffers;
 }
 
-void AccelerationStructure::BuildAccelerationStructures(Raytracer* raytracer, DX::DeviceResources* device_resources, std::vector<int> index_counts,
-    std::vector<int> vertex_counts, std::vector<int> index_starts, std::vector<int> vertex_starts)
+void AccelerationStructure::BuildAccelerationStructures(Raytracer* raytracer, DX::DeviceResources* device_resources, Scene* scene)
 {
     auto device = device_resources->GetD3DDevice();
     auto commandList = device_resources->GetCommandList();
     auto commandQueue = device_resources->GetCommandQueue();
     auto commandAllocator = device_resources->GetCommandAllocator();
 
-    int num_objects = index_counts.size();
+    int num_objects = scene->GetIndexCounts().size();
     m_bottomLevelAccelerationStructure.resize(num_objects);
     // Reset the command list for the acceleration structure construction.
     commandList->Reset(commandAllocator, nullptr);
@@ -176,7 +176,7 @@ void AccelerationStructure::BuildAccelerationStructures(Raytracer* raytracer, DX
     std::vector<AccelerationStructureBuffers> bottomLevelAS(num_objects);
     std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs(num_objects);
 
-    BuildGeometryDescsForBottomLevelAS(raytracer, geometryDescs, index_counts, vertex_counts, index_starts, vertex_starts);
+    BuildGeometryDescsForBottomLevelAS(raytracer, geometryDescs, scene->GetIndexCounts(), scene->GetVertexCounts(), scene->GetIndexLocations(), scene->GetVertexLocations());
 
     // Build all bottom-level AS.
     for (UINT i = 0; i < num_objects; i++)
@@ -194,7 +194,7 @@ void AccelerationStructure::BuildAccelerationStructures(Raytracer* raytracer, DX
     commandList->ResourceBarrier(num_objects, &resourceBarriers[0]);
 
     // Build top-level AS.
-    AccelerationStructureBuffers topLevelAS = BuildTopLevelAS(device_resources, raytracer, index_counts, vertex_counts, num_objects, bottomLevelAS);
+    AccelerationStructureBuffers topLevelAS = BuildTopLevelAS(device_resources, raytracer, scene, bottomLevelAS);
 
     // Kick off acceleration structure construction.
     device_resources->ExecuteCommandList();
