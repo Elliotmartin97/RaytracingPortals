@@ -188,8 +188,8 @@ void Raytracer::BuildGeometryBuffers(DX::DeviceResources* device_resources, Rayt
     int i_count = scene_indices.size();
     int v_count = scene_vertices.size();
 
-    AllocateUploadBuffer(device, &scene_indices[0], i_count * 2, &raytracer->GetIndexBuffer()->resource);
-    AllocateUploadBuffer(device, &scene_vertices[0], (sizeof(XMFLOAT3) * 2) * v_count, &raytracer->GetVertexBuffer()->resource);
+    AllocateUploadBuffer(device, scene_indices.data(), i_count * sizeof(int), &raytracer->GetIndexBuffer()->resource);
+    AllocateUploadBuffer(device, scene_vertices.data(), v_count * sizeof(Vertex), &raytracer->GetVertexBuffer()->resource);
 
     // Vertex buffer is passed to the shader along with index buffer as a descriptor table.
     // Vertex buffer descriptor must follow index buffer descriptor in the descriptor heap.

@@ -189,14 +189,10 @@ void Model::LoadModelFromPLY(std::string file_name, std::vector<Index> &scene_in
     scene_vertices.insert(scene_vertices.end(), model_vertices.begin(), model_vertices.end());
     index_counts.push_back(model_indices.size());
     vertex_counts.push_back(model_vertices.size());
-    if (index_start_positions.empty())
-    {
-        index_start_positions.push_back(0);
-        vertex_start_positions.push_back(0);
-    }
-    else
-    {
-        index_start_positions.push_back(scene_indices.size() - model_indices.size());
-        vertex_start_positions.push_back(scene_vertices.size() - model_vertices.size());
-    }
+
+    int previous_index_total = scene_indices.size() - model_indices.size();
+    int previous_vertex_total = scene_vertices.size() - model_vertices.size();
+    index_start_positions.push_back(previous_index_total);
+    vertex_start_positions.push_back(previous_vertex_total);
+    
 }

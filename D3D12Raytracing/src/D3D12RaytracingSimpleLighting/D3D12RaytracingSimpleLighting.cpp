@@ -8,7 +8,6 @@
 // PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
 //
 //*********************************************************
-
 #include "stdafx.h"
 #include "D3D12RaytracingSimpleLighting.h"
 #include "DirectXRaytracingHelper.h"
@@ -30,6 +29,9 @@ D3D12RaytracingSimpleLighting::D3D12RaytracingSimpleLighting(UINT width, UINT he
     model1 = new Model();
     model2 = new Model();
     model3 = new Model();
+    model4 = new Model();
+    model5 = new Model();
+    model6 = new Model();
     UpdateForSizeChange(width, height);
 }
 
@@ -145,9 +147,12 @@ void D3D12RaytracingSimpleLighting::CreateDeviceDependentResources()
     raytracer->CreateDescriptorHeap(m_deviceResources.get());
 
     // Build geometry to be used in the sample.
-    model1->LoadModelFromPLY("Models/cube.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
-    //model2->LoadModelFromPLY("Models/cube2.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
-   // model3->LoadModelFromPLY("Models/cube2.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    model1->LoadModelFromPLY("Models/icosphere.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    model2->LoadModelFromPLY("Models/bigtorus.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    model3->LoadModelFromPLY("Models/cube.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    model4->LoadModelFromPLY("Models/bigtorus.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    //model5->LoadModelFromPLY("Models/cube2.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
+    //model6->LoadModelFromPLY("Models/cube2.ply", scene_indices, scene_vertices, index_counts, vertex_counts, index_start_positions, vertex_start_positions);
     raytracer->BuildGeometryBuffers(m_deviceResources.get(), raytracer, scene_indices, scene_vertices);
 
     acceleration_structure->BuildAccelerationStructures(raytracer, m_deviceResources.get(), index_counts, vertex_counts, index_start_positions, vertex_start_positions);
@@ -184,13 +189,13 @@ void D3D12RaytracingSimpleLighting::OnUpdate()
 
     // Rotate the camera around Y axis.
     {
-        float secondsToRotateAround = 24.0f;
-        float angleToRotateBy = 360.0f * (elapsedTime / secondsToRotateAround);
+     /*   float secondsToRotateAround = 24.0f;
+        float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
         XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(angleToRotateBy));
         m_eye = XMVector3Transform(m_eye, rotate);
         m_up = XMVector3Transform(m_up, rotate);
         m_at = XMVector3Transform(m_at, rotate);
-        UpdateCameraMatrices();
+        UpdateCameraMatrices();*/
     }
 
     // Rotate the second light around Y axis.
@@ -272,8 +277,16 @@ void D3D12RaytracingSimpleLighting::OnDestroy()
     model2 = nullptr;
     delete model3;
     model3 = nullptr;
-    _CrtDumpMemoryLeaks();
-
+    delete model4;
+    model4 = nullptr;
+    delete model5;
+    model5 = nullptr;
+    delete model6;
+    model6 = nullptr;
+    delete acceleration_structure;
+    acceleration_structure = nullptr;
+    delete raytracer;
+    raytracer = nullptr;
 }
 
 // Release all device dependent resouces when a device is lost.

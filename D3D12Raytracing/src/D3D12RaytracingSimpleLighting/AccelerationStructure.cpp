@@ -10,22 +10,17 @@ AccelerationStructure::~AccelerationStructure() {}
 void AccelerationStructure::BuildGeometryDescsForBottomLevelAS(Raytracer* raytracer, std::vector<D3D12_RAYTRACING_GEOMETRY_DESC>& geometryDescs, std::vector<int> index_counts,
     std::vector<int> vertex_counts, std::vector<int> index_starts, std::vector<int> vertex_starts)
 {
-    // Mark the geometry as opaque. 
-   // PERFORMANCE TIP: mark geometry as opaque whenever applicable as it can enable important ray processing optimizations.
-   // Note: When rays encounter opaque geometry an any hit shader will not be executed whether it is present or not.
-    D3D12_RAYTRACING_GEOMETRY_FLAGS geometryFlags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
-
     for (int i = 0; i < geometryDescs.size(); i++)
     {
         geometryDescs[i] = {};
         geometryDescs[i].Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-        geometryDescs[i].Triangles.IndexBuffer = raytracer->GetIndexBuffer()->resource->GetGPUVirtualAddress() + i * (2 * index_counts[i]);
+        geometryDescs[i].Triangles.IndexBuffer = raytracer->GetIndexBuffer()->resource->GetGPUVirtualAddress() + index_starts[i] * 2;
         geometryDescs[i].Triangles.IndexCount = index_counts[i];
         geometryDescs[i].Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
         geometryDescs[i].Triangles.Transform3x4 = 0;
         geometryDescs[i].Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
         geometryDescs[i].Triangles.VertexCount = vertex_counts[i];
-        geometryDescs[i].Triangles.VertexBuffer.StartAddress = raytracer->GetVertexBuffer()->resource->GetGPUVirtualAddress() + i * (24 * vertex_counts[i]);
+        geometryDescs[i].Triangles.VertexBuffer.StartAddress = raytracer->GetVertexBuffer()->resource->GetGPUVirtualAddress() + vertex_starts[i] * 24;
         geometryDescs[i].Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
         geometryDescs[i].Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
     }
@@ -43,7 +38,7 @@ void AccelerationStructure::BuildBottomLevelASInstanceDescs(DX::DeviceResources*
         instanceDescs[i].InstanceMask = 1;
         instanceDescs[i].InstanceContributionToHitGroupIndex = 0;
         instanceDescs[i].AccelerationStructure = bottomLevelASaddresses[i];
-        XMFLOAT3 float_position = XMFLOAT3( i * 3.0f, 0.0f, 0.0f);
+        XMFLOAT3 float_position = XMFLOAT3( 0.0f, 0.0f, i * 3.0f);
         const XMVECTOR vBasePosition = XMLoadFloat3(&float_position);
 
         // Scale in XZ dimensions.
