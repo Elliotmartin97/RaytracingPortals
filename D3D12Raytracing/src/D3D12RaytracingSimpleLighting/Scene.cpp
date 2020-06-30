@@ -23,7 +23,7 @@ void Scene::LoadScene(std::string filename)
                 Model model;
                 model.LoadModelFromPLY(model_filename, scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
                 XMFLOAT3 position_float3 = XMFLOAT3(posx, posy, posz);
-                XMFLOAT3 rotation_float3 = XMFLOAT3(posx, posy, posz);
+                XMFLOAT3 rotation_float3 = XMFLOAT3(XMConvertToRadians(rotx), XMConvertToRadians(roty), XMConvertToRadians(rotz));
                 XMFLOAT3 scale_float3 = XMFLOAT3(scax, scay, scaz);
                 XMVECTOR position_vector = XMLoadFloat3(&position_float3);
                 XMVECTOR rotation_vector = XMLoadFloat3(&rotation_float3);
@@ -31,7 +31,6 @@ void Scene::LoadScene(std::string filename)
                 model.SetPosition(position_vector);
                 model.SetRotation(rotation_vector);
                 model.SetScale(scale_vector);
-
                 scene_models.push_back(model);
             }
         }
