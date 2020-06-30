@@ -290,6 +290,7 @@ void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width,
 
     commandList->SetDescriptorHeaps(1, m_descriptorHeap.GetAddressOf());
     // Set index and successive vertex buffer decriptor tables
+
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffersSlot, m_indexBuffer.gpuDescriptorHandle);
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutputResourceUAVGpuDescriptor);
 
