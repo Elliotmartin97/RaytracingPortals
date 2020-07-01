@@ -3,11 +3,13 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include "Raytracer.h"
 
-void Scene::LoadScene(std::string filename)
+void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytracer, std::string filename)
 {
     std::string line;
     std::ifstream file;
+
     file.open(filename);
     if (file.is_open())
     {
@@ -31,6 +33,8 @@ void Scene::LoadScene(std::string filename)
                 model.SetPosition(position_vector);
                 model.SetRotation(rotation_vector);
                 model.SetScale(scale_vector);
+                model.BuildGeometryBuffers(device_resources, raytracer, this, buffer_count);
+                buffer_count++;
                 scene_models.push_back(model);
             }
         }

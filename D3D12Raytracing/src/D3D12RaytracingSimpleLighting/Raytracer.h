@@ -38,13 +38,13 @@ public:
 	void CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* raytracingPipeline);
 	void CreateRaytracingPipelineStateObject();
 	void CreateRaytracingOutputResource(DX::DeviceResources* device_resources, UINT64 width, UINT64 height);
-	void CreateDescriptorHeap(DX::DeviceResources* device_resources);
+	void CreateDescriptorHeap(DX::DeviceResources* device_resources, int buffer_count);
 	void CreateConstantBuffers(DX::DeviceResources* device_resources);
 	void DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width, UINT height, ComPtr<ID3D12Resource> m_topLevelAccelerationStructure);
 	void BuildShaderTables(DX::DeviceResources* device_resources);
 	void ReleaseRaytracerResources();
 	void CopyRaytracingOutputToBackbuffer(DX::DeviceResources* device_resources);
-	void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene *scene);
+	//void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene *scene);
 	UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse = UINT_MAX);
 	UINT CreateBufferSRV(DX::DeviceResources* device_resources, D3DBuffer* buffer, UINT numElements, UINT elementSize);
 	ComPtr<ID3D12Device5> GetDXRDevice() { return m_dxrDevice; }
@@ -53,8 +53,9 @@ public:
 	CubeConstantBuffer& GetCubeCB() { return m_cubeCB; }
 	SceneConstantBuffer* GetSceneCB() { return m_sceneCB; }
 	UINT GetFrameCount() { return FrameCount; }
-	D3DBuffer* GetIndexBuffer() { return &m_indexBuffer; }
-	D3DBuffer* GetVertexBuffer() { return &m_vertexBuffer; }
+	D3DBuffer* GetIndexBuffer(int idx) { return &m_indexBuffer[idx]; }
+	D3DBuffer* GetVertexBuffer(int idx) { return &m_vertexBuffer[idx]; }
+	void AddBufferSlot() { m_indexBuffer.resize(m_indexBuffer.size() + 1); m_vertexBuffer.resize(m_vertexBuffer.size() + 1); }
 	ComPtr<ID3D12Resource> GetRaytracingOutput() { return m_raytracingOutput; }
 private:
 
@@ -77,8 +78,8 @@ private:
 	ComPtr<ID3D12Resource> m_missShaderTable;
 	ComPtr<ID3D12Resource> m_hitGroupShaderTable;
 	ComPtr<ID3D12Resource> m_rayGenShaderTable;
-	D3DBuffer m_indexBuffer;
-	D3DBuffer m_vertexBuffer;
+	std::vector<D3DBuffer> m_indexBuffer;
+	std::vector<D3DBuffer> m_vertexBuffer;
 	SceneConstantBuffer m_sceneCB[FrameCount];
 	CubeConstantBuffer m_cubeCB;
 	AlignedSceneConstantBuffer* m_mappedConstantData;

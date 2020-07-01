@@ -5,7 +5,7 @@
 #include <vector>
 
 class Raytracer;
-
+class Scene;
 class Model
 {
 public:
@@ -14,6 +14,7 @@ public:
 	void LoadModelFromOBJ(std::string file_name);
 	void LoadModelFromPLY(std::string file_name, std::vector<Index>& scene_indices, std::vector<Vertex>& scene_vertices, std::vector<int> &index_counts,
 		std::vector<int> &vertex_counts, std::vector<int> &index_start_positions, std::vector<int> &vertex_start_positions);
+	void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene* scene, int buffer_index);
 	std::vector<Index> GetIndex() { return model_indices; }
 	std::vector<Vertex> GetVertex() { return model_vertices; }
 	XMVECTOR GetPosition() { return position; }

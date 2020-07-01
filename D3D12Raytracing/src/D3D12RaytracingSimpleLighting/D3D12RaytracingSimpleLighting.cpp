@@ -140,12 +140,11 @@ void D3D12RaytracingSimpleLighting::CreateDeviceDependentResources()
     raytracer->CreateRaytracingPipelineStateObject();
 
     // Create a heap for descriptors.
-    raytracer->CreateDescriptorHeap(m_deviceResources.get());
-
+    raytracer->CreateDescriptorHeap(m_deviceResources.get(), 4);
     // Build geometry to be used in the sample.
-    scene->LoadScene("Scenes/scene0.txt");
+    scene->LoadScene(m_deviceResources.get(), raytracer, "Scenes/scene0.txt");
 
-    raytracer->BuildGeometryBuffers(m_deviceResources.get(), raytracer, scene);
+   // raytracer->BuildGeometryBuffers(m_deviceResources.get(), raytracer, scene);
 
     acceleration_structure->BuildAccelerationStructures(raytracer, m_deviceResources.get(), scene);
 

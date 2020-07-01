@@ -6,7 +6,7 @@ class Scene
 public:
     Scene() = default;
     ~Scene() = default;
-	void LoadScene(std::string filename);
+	void LoadScene(DX::DeviceResources* device_resources, Raytracer* raytracer, std::string filename);
 	std::vector<Model> GetSceneModels() { return scene_models; }
     std::vector<Index> GetSceneIndices() { return scene_indices; }
     std::vector<Vertex> GetSceneVertices() { return scene_vertices; }
@@ -14,6 +14,7 @@ public:
     std::vector<int> GetVertexCounts() { return vertex_counts; }
     std::vector<int> GetIndexLocations() { return index_locations; }
     std::vector<int> GetVertexLocations() { return vertex_locations; }
+    int GetBufferCount() { return buffer_count; }
 private:
 	std::vector<Model> scene_models;
     std::vector<Index> scene_indices;
@@ -22,4 +23,5 @@ private:
     std::vector<int> vertex_counts;
     std::vector<int> index_locations;
     std::vector<int> vertex_locations;
+    int buffer_count = 0;
 };

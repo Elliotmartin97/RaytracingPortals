@@ -15,13 +15,13 @@ void AccelerationStructure::BuildGeometryDescsForBottomLevelAS(Raytracer* raytra
     {
         geometryDescs[i] = {};
         geometryDescs[i].Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-        geometryDescs[i].Triangles.IndexBuffer = raytracer->GetIndexBuffer()->resource->GetGPUVirtualAddress() + index_starts[i] * 2;
+        geometryDescs[i].Triangles.IndexBuffer = raytracer->GetIndexBuffer(i)->resource->GetGPUVirtualAddress(); //+ index_starts[i] * 2;
         geometryDescs[i].Triangles.IndexCount = index_counts[i];
         geometryDescs[i].Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
         geometryDescs[i].Triangles.Transform3x4 = 0;
         geometryDescs[i].Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
         geometryDescs[i].Triangles.VertexCount = vertex_counts[i];
-        geometryDescs[i].Triangles.VertexBuffer.StartAddress = raytracer->GetVertexBuffer()->resource->GetGPUVirtualAddress() + vertex_starts[i] * 24;
+        geometryDescs[i].Triangles.VertexBuffer.StartAddress = raytracer->GetVertexBuffer(i)->resource->GetGPUVirtualAddress(); //+ vertex_starts[i] * 24;
         geometryDescs[i].Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
         geometryDescs[i].Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
     }
