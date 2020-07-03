@@ -205,12 +205,12 @@ void Model::BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytrace
     int i_count = model_indices.size();
     int v_count = model_vertices.size();
     raytracer->AddBufferSlot();
-    AllocateUploadBuffer(device, &model_indices[0], i_count * sizeof(int), &raytracer->GetIndexBuffer(b_idx)->resource);
-    AllocateUploadBuffer(device, &model_vertices[0], v_count * sizeof(Vertex), &raytracer->GetVertexBuffer(b_idx)->resource);
+    AllocateUploadBuffer(device, &model_indices[0], i_count * sizeof(int), &raytracer->GetIndexBufferByIndex(b_idx)->resource);
+    AllocateUploadBuffer(device, &model_vertices[0], v_count * sizeof(Vertex), &raytracer->GetVertexBufferByIndex(b_idx)->resource);
 
     // Vertex buffer is passed to the shader along with index buffer as a descriptor table.
     // Vertex buffer descriptor must follow index buffer descriptor in the descriptor heap.
-    UINT descriptorIndexIB = raytracer->CreateBufferSRV(device_resources, raytracer->GetIndexBuffer(b_idx), (i_count * 2) / 4, 0);
-    UINT descriptorIndexVB = raytracer->CreateBufferSRV(device_resources, raytracer->GetVertexBuffer(b_idx), v_count, sizeof(XMFLOAT3) * 2);
+    UINT descriptorIndexIB = raytracer->CreateBufferSRV(device_resources, raytracer->GetIndexBufferByIndex(b_idx), (i_count * 2) / 4, 0);
+    UINT descriptorIndexVB = raytracer->CreateBufferSRV(device_resources, raytracer->GetVertexBufferByIndex(b_idx), v_count, sizeof(XMFLOAT3) * 2);
     ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index!");
 }

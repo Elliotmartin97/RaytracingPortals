@@ -32,32 +32,28 @@ void Raytracer::CreateRootSignatures(DX::DeviceResources *device_resources)
 {
     auto device = device_resources->GetD3DDevice();
 
-    // Global Root Signature
-    // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
-    {
-        CD3DX12_DESCRIPTOR_RANGE ranges[3]; // Perfomance TIP: Order from most frequent to least frequent.
+  
+        CD3DX12_DESCRIPTOR_RANGE ranges[2];
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);  // 1 output texture
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);
+        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // Index + Vertex Buffers
 
-
-        CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
-        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &ranges[0]);
-        rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);
-        rootParameters[GlobalRootSignatureParams::SceneConstantSlot].InitAsConstantBufferView(0);
-        rootParameters[GlobalRootSignatureParams::VertexBuffersSlot].InitAsDescriptorTable(1, &ranges[1]);
-        CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+        // Global Root Signature
+        CD3DX12_ROOT_PARAMETER globalParams[GlobalRootSignatureParams::Count];
+        globalParams[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &ranges[0]);
+        globalParams[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);
+        globalParams[GlobalRootSignatureParams::SceneConstantSlot].InitAsConstantBufferView(0);
+        CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(globalParams), globalParams);
         SerializeAndCreateRaytracingRootSignature(device_resources, globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
-    }
-
-    // Local Root Signature
-    // This is a root signature that enables a shader to have unique arguments that come from shader tables.
-    {
-        CD3DX12_ROOT_PARAMETER rootParameters[LocalRootSignatureParams::Count];
-        rootParameters[LocalRootSignatureParams::CubeConstantSlot].InitAsConstants(SizeOfInUint32(m_cubeCB), 1);
-        CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+    
+        // Local Root Signature
+        CD3DX12_ROOT_PARAMETER localParams[LocalRootSignatureParams::Count];
+        localParams[LocalRootSignatureParams::CubeConstantSlot].InitAsConstants(SizeOfInUint32(m_cubeCB), 1);
+        localParams[LocalRootSignatureParams::VertexBuffersSlot].InitAsDescriptorTable(1, &ranges[1]);
+        CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(localParams), localParams);
         localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
         SerializeAndCreateRaytracingRootSignature(device_resources, localRootSignatureDesc, &m_raytracingLocalRootSignature);
-    }
+    
 }
 
 void Raytracer::SerializeAndCreateRaytracingRootSignature(DX::DeviceResources *device_resources, D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig)
@@ -207,7 +203,7 @@ void Raytracer::CreateDescriptorHeap(DX::DeviceResources* device_resources, int 
     // Allocate a heap for 3 descriptors:
     // 2 - vertex and index buffer SRVs
     // 1 - raytracing output texture SRV
-    descriptorHeapDesc.NumDescriptors = 1 + (buffer_count * 2); // 1 raytracing output + 2 slots for index and vertex buffers for each model
+    descriptorHeapDesc.NumDescriptors = 1 + buffer_count; // 1 raytracing output + 2 slots for index and vertex buffers for each model
     descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     descriptorHeapDesc.NodeMask = 0;
@@ -265,7 +261,7 @@ void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width,
         // Since each shader table has only one shader record, the stride is same as the size.
         dispatchDesc->HitGroupTable.StartAddress = m_hitGroupShaderTable->GetGPUVirtualAddress();
         dispatchDesc->HitGroupTable.SizeInBytes = m_hitGroupShaderTable->GetDesc().Width;
-        dispatchDesc->HitGroupTable.StrideInBytes = dispatchDesc->HitGroupTable.SizeInBytes;
+        dispatchDesc->HitGroupTable.StrideInBytes = hitGroupShaderTableStrideInBytes;
         dispatchDesc->MissShaderTable.StartAddress = m_missShaderTable->GetGPUVirtualAddress();
         dispatchDesc->MissShaderTable.SizeInBytes = m_missShaderTable->GetDesc().Width;
         dispatchDesc->MissShaderTable.StrideInBytes = dispatchDesc->MissShaderTable.SizeInBytes;
@@ -289,11 +285,10 @@ void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width,
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
 
     commandList->SetDescriptorHeaps(1, m_descriptorHeap.GetAddressOf());
-    // Set index and successive vertex buffer decriptor tables
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffersSlot, m_indexBuffer[0].gpuDescriptorHandle);
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutputResourceUAVGpuDescriptor);
 
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutputResourceUAVGpuDescriptor);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, m_topLevelAccelerationStructure->GetGPUVirtualAddress());
+
     DispatchRays(m_dxrCommandList.Get(), m_dxrStateObject.Get(), &dispatchDesc);
 
 }
@@ -342,15 +337,24 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
 
     // Hit group shader table
     {
-        struct RootArguments {
-            CubeConstantBuffer cb;
-        } rootArguments;
+        RootArguments rootArguments, rootArguments2;
         rootArguments.cb = m_cubeCB;
+        rootArguments2.cb = m_cubeCB;
+        rootArguments.handle = m_indexBuffer[0].gpuDescriptorHandle.ptr;
+        rootArguments2.handle = m_indexBuffer[1].gpuDescriptorHandle.ptr;
 
-        UINT numShaderRecords = 1;
-        UINT shaderRecordSize = shaderIdentifierSize + sizeof(rootArguments);
+
+#define ALIGN(alignment, num) ((((num) + alignment - 1) / alignment) * alignment)
+        const UINT offsetToDescriptorHandle = ALIGN(sizeof(D3D12_GPU_DESCRIPTOR_HANDLE), shaderIdentifierSize);
+        const UINT offsetToMaterialConstants = ALIGN(sizeof(UINT32), offsetToDescriptorHandle + sizeof(D3D12_GPU_DESCRIPTOR_HANDLE));
+        const UINT shaderRecordSizeInBytes = ALIGN(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, offsetToMaterialConstants + sizeof(RootArguments));
+
+        UINT numShaderRecords = 2;
+        UINT shaderRecordSize = shaderRecordSizeInBytes;
+        hitGroupShaderTableStrideInBytes = shaderRecordSize;
         ShaderTable hitGroupShaderTable(device, numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
         hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
+        hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize, &rootArguments2, sizeof(rootArguments2)));
         m_hitGroupShaderTable = hitGroupShaderTable.GetResource();
     }
 }

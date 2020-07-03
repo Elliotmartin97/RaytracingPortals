@@ -180,7 +180,7 @@ void D3D12RaytracingSimpleLighting::OnUpdate()
 
     // Rotate the camera around Y axis.
     {
-        float secondsToRotateAround = 24.0f;
+        float secondsToRotateAround = 56.0f;
         float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
         XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(angleToRotateBy));
         m_eye = XMVector3Transform(m_eye, rotate);

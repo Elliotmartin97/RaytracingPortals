@@ -7,7 +7,6 @@ namespace GlobalRootSignatureParams {
 		OutputViewSlot = 0,
 		AccelerationStructureSlot,
 		SceneConstantSlot,
-		VertexBuffersSlot,
 		Count
 	};
 }
@@ -15,6 +14,7 @@ namespace GlobalRootSignatureParams {
 namespace LocalRootSignatureParams {
 	enum Value {
 		CubeConstantSlot = 0,
+		VertexBuffersSlot,
 		Count
 	};
 }
@@ -23,6 +23,12 @@ union AlignedSceneConstantBuffer
 {
 	SceneConstantBuffer constants;
 	uint8_t alignmentPadding[D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT];
+};
+
+struct RootArguments
+{
+	CubeConstantBuffer cb;
+	UINT64 handle;
 };
 
 class Scene;
@@ -53,10 +59,13 @@ public:
 	CubeConstantBuffer& GetCubeCB() { return m_cubeCB; }
 	SceneConstantBuffer* GetSceneCB() { return m_sceneCB; }
 	UINT GetFrameCount() { return FrameCount; }
-	D3DBuffer* GetIndexBuffer(int idx) { return &m_indexBuffer[idx]; }
-	D3DBuffer* GetVertexBuffer(int idx) { return &m_vertexBuffer[idx]; }
+	std::vector<D3DBuffer> GetIndexBuffers() { return m_indexBuffer; }
+	std::vector<D3DBuffer> GetVertexBuffers() { return m_vertexBuffer; }
+	D3DBuffer* GetIndexBufferByIndex(int idx) { return &m_indexBuffer[idx]; }
+	D3DBuffer* GetVertexBufferByIndex(int idx) { return &m_vertexBuffer[idx]; }
 	void AddBufferSlot() { m_indexBuffer.resize(m_indexBuffer.size() + 1); m_vertexBuffer.resize(m_vertexBuffer.size() + 1); }
 	ComPtr<ID3D12Resource> GetRaytracingOutput() { return m_raytracingOutput; }
+	UINT GetShaderHitGroupStride() { return hitGroupShaderTableStrideInBytes; }
 private:
 
 	static const UINT FrameCount = 3;
@@ -84,4 +93,5 @@ private:
 	CubeConstantBuffer m_cubeCB;
 	AlignedSceneConstantBuffer* m_mappedConstantData;
 	ComPtr<ID3D12Resource>       m_perFrameConstants;
+	UINT hitGroupShaderTableStrideInBytes = 0;
 };
