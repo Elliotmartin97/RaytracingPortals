@@ -77,9 +77,6 @@ void D3D12RaytracingSimpleLighting::InitializeScene()
         camera->SetTarget(0.0f, 0.0f, 0.0f, 1.0f);
         camera->SetupCamera();
 
-        // Rotate camera around Y axis.
-        XMMATRIX rotation = XMMatrixRotationY(XMConvertToRadians(45.0f));
-        camera->RotatePosition(rotation);
         
         camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
     }
@@ -163,13 +160,13 @@ void D3D12RaytracingSimpleLighting::OnUpdate()
 
     // Rotate the camera around Y axis.
     {
-        float secondsToRotateAround = 56.0f;
+   /*     float secondsToRotateAround = 56.0f;
         float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
         XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(angleToRotateBy));
         camera->RotatePosition(rotate);
         camera->RotateTarget(rotate);
         camera->RotateUp(rotate);
-        camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
+        camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);*/
     }
 
     // Rotate the second light around Y axis.
