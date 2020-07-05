@@ -27,8 +27,8 @@ union AlignedSceneConstantBuffer
 
 struct RootArguments
 {
-	CubeConstantBuffer cb;
-	UINT64 handle;
+	CubeConstantBuffer constant_buffer;
+	UINT64 gpu_handle;
 };
 
 class Scene;

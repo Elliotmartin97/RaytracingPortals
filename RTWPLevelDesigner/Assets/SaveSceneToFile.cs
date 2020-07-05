@@ -26,7 +26,6 @@ public class SaveSceneToFile : MonoBehaviour
             AddGameobjectsToList();
             GenerateFileFromModelList();
             generate = false;
-            Debug.Log(Models[1].transform.position);
         }
     }
 
@@ -41,6 +40,7 @@ public class SaveSceneToFile : MonoBehaviour
         StreamWriter sr = File.CreateText("Assets/CreatedScenes/" + scene_name + ".txt");
         sr.WriteLine("# Scene file");
         sr.WriteLine("# Scene Name: " + scene_name);
+        sr.WriteLine("% ModelCount: " + Models.Count);
         sr.WriteLine("# Format: Model name, PositionXYZ, RotationXYZ, ScaleXYZ");
         for(int i = 0; i < Models.Count; i++)
         {

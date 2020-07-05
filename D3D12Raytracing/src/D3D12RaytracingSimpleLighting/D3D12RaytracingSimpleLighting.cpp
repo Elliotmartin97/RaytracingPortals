@@ -16,6 +16,7 @@
 #include "AccelerationStructure.h"
 #include "Model.h"
 #include "Scene.h"
+#include "Camera.h"
 
 using namespace std;
 using namespace DX;
@@ -24,10 +25,10 @@ D3D12RaytracingSimpleLighting::D3D12RaytracingSimpleLighting(UINT width, UINT he
     DXSample(width, height, name)
 {
     m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
-    m_curRotationAngleRad = 0.0f;
     raytracer = new Raytracer(m_raytracingOutputResourceUAVDescriptorHeapIndex);
     acceleration_structure = new AccelerationStructure();
     scene = new Scene();
+    camera = new Camera();
     UpdateForSizeChange(width, height);
 }
 
@@ -59,20 +60,6 @@ void D3D12RaytracingSimpleLighting::OnInit()
     CreateWindowSizeDependentResources();
 }
 
-// Update camera matrices passed into the shader.
-void D3D12RaytracingSimpleLighting::UpdateCameraMatrices()
-{
-    auto frameIndex = m_deviceResources->GetCurrentFrameIndex();
-
-    raytracer->GetSceneCB()[frameIndex].cameraPosition = m_eye;
-    float fovAngleY = 45.0f;
-    XMMATRIX view = XMMatrixLookAtLH(m_eye, m_at, m_up);
-    XMMATRIX proj = XMMatrixPerspectiveFovLH(XMConvertToRadians(fovAngleY), m_aspectRatio, 1.0f, 125.0f);
-    XMMATRIX viewProj = view * proj;
-
-    raytracer->GetSceneCB()[frameIndex].projectionToWorld = XMMatrixInverse(nullptr, viewProj);
-}
-
 // Initialize scene rendering parameters.
 void D3D12RaytracingSimpleLighting::InitializeScene()
 {
@@ -86,19 +73,15 @@ void D3D12RaytracingSimpleLighting::InitializeScene()
     // Setup camera.
     {
         // Initialize the view and projection inverse matrices.
-        m_eye = { 0.0f, 2.0f, -5.0f, 1.0f };
-        m_at = { 0.0f, 0.0f, 0.0f, 1.0f };
-        XMVECTOR right = { 1.0f, 0.0f, 0.0f, 0.0f };
-
-        XMVECTOR direction = XMVector4Normalize(m_at - m_eye);
-        m_up = XMVector3Normalize(XMVector3Cross(direction, right));
+        camera->SetPosition(0.0f, 2.0f, -9.0f, 1.0f);
+        camera->SetTarget(0.0f, 0.0f, 0.0f, 1.0f);
+        camera->SetupCamera();
 
         // Rotate camera around Y axis.
-        XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(45.0f));
-        m_eye = XMVector3Transform(m_eye, rotate);
-        m_up = XMVector3Transform(m_up, rotate);
+        XMMATRIX rotation = XMMatrixRotationY(XMConvertToRadians(45.0f));
+        camera->RotatePosition(rotation);
         
-        UpdateCameraMatrices();
+        camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
     }
 
     // Setup lights.
@@ -140,7 +123,7 @@ void D3D12RaytracingSimpleLighting::CreateDeviceDependentResources()
     raytracer->CreateRaytracingPipelineStateObject();
 
     // Create a heap for descriptors.
-    raytracer->CreateDescriptorHeap(m_deviceResources.get(), 4);
+    raytracer->CreateDescriptorHeap(m_deviceResources.get(), scene->GetSceneModelCount("Scenes/Scene0.txt"));
     // Build geometry to be used in the sample.
     scene->LoadScene(m_deviceResources.get(), raytracer, "Scenes/scene0.txt");
 
@@ -183,10 +166,10 @@ void D3D12RaytracingSimpleLighting::OnUpdate()
         float secondsToRotateAround = 56.0f;
         float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
         XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(angleToRotateBy));
-        m_eye = XMVector3Transform(m_eye, rotate);
-        m_up = XMVector3Transform(m_up, rotate);
-        m_at = XMVector3Transform(m_at, rotate);
-        UpdateCameraMatrices();
+        camera->RotatePosition(rotate);
+        camera->RotateTarget(rotate);
+        camera->RotateUp(rotate);
+        camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
     }
 
     // Rotate the second light around Y axis.
@@ -210,7 +193,7 @@ void D3D12RaytracingSimpleLighting::UpdateForSizeChange(UINT width, UINT height)
 void D3D12RaytracingSimpleLighting::CreateWindowSizeDependentResources()
 {
     raytracer->CreateRaytracingOutputResource(m_deviceResources.get(),m_width, m_height);
-    UpdateCameraMatrices();
+    camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
 }
 
 // Release resources that are dependent on the size of the main window.
@@ -268,6 +251,8 @@ void D3D12RaytracingSimpleLighting::OnDestroy()
     raytracer = nullptr;
     delete scene;
     scene = nullptr;
+    delete camera;
+    camera = nullptr;
 }
 
 // Release all device dependent resouces when a device is lost.

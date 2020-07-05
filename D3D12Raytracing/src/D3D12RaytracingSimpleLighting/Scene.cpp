@@ -5,6 +5,32 @@
 #include <algorithm>
 #include "Raytracer.h"
 
+int Scene::GetSceneModelCount(std::string filename)
+{
+    std::string line;
+    std::ifstream file;
+    std::string str;
+    int model_count = 0;
+    file.open(filename);
+    
+    if (file.is_open())
+    {
+        while (std::getline(file, line))
+        {
+            if (line[0] == '%')
+            {
+                std::istringstream iss(line.substr(1));
+
+                iss >> str >> model_count;
+                file.close();
+                return model_count;
+            }
+        }
+    }
+    file.close();
+    return 0;
+}
+
 void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytracer, std::string filename)
 {
     std::string line;
@@ -15,9 +41,10 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
     {
         std::string model_filename;
         float posx, posy, posz, rotx, roty, rotz, scax, scay, scaz;
+        int model_count = 0;
         while (std::getline(file, line))
         {
-            if (line[0] != '#')
+            if (line[0] != '#' && line[0] != '%')
             {
                 std::istringstream iss(line);
                 std::string model_filename;
@@ -33,10 +60,12 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
                 model.SetPosition(position_vector);
                 model.SetRotation(rotation_vector);
                 model.SetScale(scale_vector);
-                model.BuildGeometryBuffers(device_resources, raytracer, this, buffer_count);
-                buffer_count++;
+                model.BuildGeometryBuffers(device_resources, raytracer, this, model_count);
                 scene_models.push_back(model);
+                model_count++;
             }
         }
     }
+
+    file.close();
 }

@@ -203,7 +203,7 @@ void Raytracer::CreateDescriptorHeap(DX::DeviceResources* device_resources, int 
     // Allocate a heap for 3 descriptors:
     // 2 - vertex and index buffer SRVs
     // 1 - raytracing output texture SRV
-    descriptorHeapDesc.NumDescriptors = 1 + buffer_count; // 1 raytracing output + 2 slots for index and vertex buffers for each model
+    descriptorHeapDesc.NumDescriptors = 1 + (buffer_count * 2); // 1 raytracing output + 2 slots for index and vertex buffers for each model
     descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     descriptorHeapDesc.NodeMask = 0;
@@ -336,27 +336,34 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
     }
 
     // Hit group shader table
+
+    //needs redoing for performance
+    int hitgroup_counts = m_indexBuffer.size();
+    std::vector<RootArguments> root_arguments;
+    for (int i = 0; i < hitgroup_counts; i++)
     {
-        RootArguments rootArguments, rootArguments2;
-        rootArguments.cb = m_cubeCB;
-        rootArguments2.cb = m_cubeCB;
-        rootArguments.handle = m_indexBuffer[0].gpuDescriptorHandle.ptr;
-        rootArguments2.handle = m_indexBuffer[1].gpuDescriptorHandle.ptr;
+        RootArguments new_root;
+        new_root.constant_buffer = m_cubeCB;
+        new_root.gpu_handle = m_indexBuffer[i].gpuDescriptorHandle.ptr;
+        root_arguments.push_back(new_root);
+    }
 
 
 #define ALIGN(alignment, num) ((((num) + alignment - 1) / alignment) * alignment)
-        const UINT offsetToDescriptorHandle = ALIGN(sizeof(D3D12_GPU_DESCRIPTOR_HANDLE), shaderIdentifierSize);
-        const UINT offsetToMaterialConstants = ALIGN(sizeof(UINT32), offsetToDescriptorHandle + sizeof(D3D12_GPU_DESCRIPTOR_HANDLE));
-        const UINT shaderRecordSizeInBytes = ALIGN(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, offsetToMaterialConstants + sizeof(RootArguments));
+    const UINT offsetToDescriptorHandle = ALIGN(sizeof(D3D12_GPU_DESCRIPTOR_HANDLE), shaderIdentifierSize);
+    const UINT offsetToMaterialConstants = ALIGN(sizeof(UINT32), offsetToDescriptorHandle + sizeof(D3D12_GPU_DESCRIPTOR_HANDLE));
+    const UINT shaderRecordSizeInBytes = ALIGN(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, offsetToMaterialConstants + sizeof(RootArguments));
 
-        UINT numShaderRecords = 2;
-        UINT shaderRecordSize = shaderRecordSizeInBytes;
-        hitGroupShaderTableStrideInBytes = shaderRecordSize;
-        ShaderTable hitGroupShaderTable(device, numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
-        hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
-        hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize, &rootArguments2, sizeof(rootArguments2)));
-        m_hitGroupShaderTable = hitGroupShaderTable.GetResource();
+    UINT numShaderRecords = hitgroup_counts;
+    UINT shaderRecordSize = shaderRecordSizeInBytes;
+    hitGroupShaderTableStrideInBytes = shaderRecordSize;
+    ShaderTable hitGroupShaderTable(device, numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
+    for (int i = 0; i < hitgroup_counts; i++)
+    {
+        hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
     }
+    m_hitGroupShaderTable = hitGroupShaderTable.GetResource();
+    
 }
 
 void Raytracer::CopyRaytracingOutputToBackbuffer(DX::DeviceResources* device_resources)

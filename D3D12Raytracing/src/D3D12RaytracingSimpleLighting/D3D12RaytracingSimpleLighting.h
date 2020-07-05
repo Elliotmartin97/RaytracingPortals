@@ -8,6 +8,7 @@ class Model;
 class Raytracer;
 class AccelerationStructure;
 class Scene;
+class Camera;
 
 class D3D12RaytracingSimpleLighting : public DXSample
 {
@@ -45,11 +46,6 @@ private:
     
     // Application state
     StepTimer m_timer;
-    float m_curRotationAngleRad;
-    XMVECTOR m_eye;
-    XMVECTOR m_at;
-    XMVECTOR m_up;
-    void UpdateCameraMatrices();
     void InitializeScene();
     void RecreateD3D();
     void CreateDeviceDependentResources();
@@ -62,4 +58,5 @@ private:
     Raytracer* raytracer;
     AccelerationStructure* acceleration_structure;
     Scene* scene;
+    Camera* camera;
 };
