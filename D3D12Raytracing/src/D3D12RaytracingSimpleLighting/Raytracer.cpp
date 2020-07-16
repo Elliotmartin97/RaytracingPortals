@@ -7,10 +7,18 @@
 
 using namespace DirectX;
 
-const wchar_t* Raytracer::c_hitGroupName = L"MyHitGroup";
+const wchar_t* Raytracer::c_hitGroupName[2] =
+{
+    L"MyHitGroup",
+    L"PortalHitGroup"
+};
 
 const wchar_t* Raytracer::c_raygenShaderName = L"MyRaygenShader";
-const wchar_t* Raytracer::c_closestHitShaderNames = L"MyClosestHitShader";
+const wchar_t* Raytracer::c_closestHitShaderNames[2] =
+{
+    L"MyClosestHitShader",
+    L"PortalClosestHitShader"
+};
 
 
 const wchar_t* Raytracer::c_missShaderName = L"MyMissShader";
@@ -80,7 +88,7 @@ void Raytracer::CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* ra
     {
         auto rootSignatureAssociation = raytracingPipeline->CreateSubobject<CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT>();
         rootSignatureAssociation->SetSubobjectToAssociate(*localRootSignature);
-        rootSignatureAssociation->AddExport(c_hitGroupName);
+        rootSignatureAssociation->AddExports(c_hitGroupName);
     }
 }
 
@@ -114,7 +122,8 @@ void Raytracer::CreateRaytracingPipelineStateObject()
     // In this sample, this could be ommited for convenience since the sample uses all shaders in the library. 
     {
         lib->DefineExport(c_raygenShaderName);
-        lib->DefineExport(c_closestHitShaderNames);
+        lib->DefineExport(c_closestHitShaderNames[0]);
+        lib->DefineExport(c_closestHitShaderNames[1]);
         lib->DefineExport(c_missShaderName);
     }
 
@@ -122,11 +131,14 @@ void Raytracer::CreateRaytracingPipelineStateObject()
     // A hit group specifies closest hit, any hit and intersection shaders to be executed when a ray intersects the geometry's triangle/AABB.
     // In this sample, we only use triangle geometry with a closest hit shader, so others are not set.
     auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
-    hitGroup->SetClosestHitShaderImport(c_closestHitShaderNames);
-    hitGroup->SetHitGroupExport(c_hitGroupName);
+    hitGroup->SetClosestHitShaderImport(c_closestHitShaderNames[0]);
+    hitGroup->SetHitGroupExport(c_hitGroupName[0]);
     hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
 
-
+    auto hitGroup2 = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
+    hitGroup2->SetClosestHitShaderImport(c_closestHitShaderNames[1]);
+    hitGroup2->SetHitGroupExport(c_hitGroupName[1]);
+    hitGroup2->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
 
     // Shader config
     // Defines the maximum sizes in bytes for the ray payload and attribute structure.
@@ -304,13 +316,14 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
 
     void* rayGenShaderIdentifier;
     void* missShaderIdentifier;
-    void* hitGroupShaderIdentifier;
+    void* hitGroupShaderIdentifier[2];
 
     auto GetShaderIdentifiers = [&](auto* stateObjectProperties)
     {
         rayGenShaderIdentifier = stateObjectProperties->GetShaderIdentifier(c_raygenShaderName);
         missShaderIdentifier = stateObjectProperties->GetShaderIdentifier(c_missShaderName);
-        hitGroupShaderIdentifier = stateObjectProperties->GetShaderIdentifier(c_hitGroupName);
+        hitGroupShaderIdentifier[0] = stateObjectProperties->GetShaderIdentifier(c_hitGroupName[0]);
+        hitGroupShaderIdentifier[1] = stateObjectProperties->GetShaderIdentifier(c_hitGroupName[1]);
     };
 
     // Get shader identifiers.
@@ -365,7 +378,11 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
     ShaderTable hitGroupShaderTable(device, numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
     for (int i = 0; i < hitgroup_counts; i++)
     {
-        auto& hitgroup_id = hitGroupShaderIdentifier;
+        auto& hitgroup_id = hitGroupShaderIdentifier[0];
+        if (i == 13)
+        {
+            hitgroup_id = hitGroupShaderIdentifier[1];
+        }
 
         hitGroupShaderTable.push_back(ShaderRecord(hitgroup_id, shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
     }

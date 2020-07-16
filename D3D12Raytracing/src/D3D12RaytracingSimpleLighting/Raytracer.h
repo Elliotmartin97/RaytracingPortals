@@ -80,9 +80,9 @@ private:
 	UINT descriptor_heap_index;
 	UINT m_descriptorsAllocated;
 	UINT m_descriptorSize;
-	static const wchar_t* c_hitGroupName;
+	static const wchar_t* c_hitGroupName[];
 	static const wchar_t* c_raygenShaderName;
-	static const wchar_t* c_closestHitShaderNames;
+	static const wchar_t* c_closestHitShaderNames[];
 	static const wchar_t* c_missShaderName;
 	ComPtr<ID3D12Resource> m_missShaderTable;
 	ComPtr<ID3D12Resource> m_hitGroupShaderTable;

@@ -179,12 +179,13 @@ void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     Vertices[indices[2]].normal
     };
 
-    float3 portal_origin = hit_position;
+    float3 reverse = { hit_position.x * -1, hit_position.y,hit_position.z };
+    float3 portal_origin = reverse;
     float3 A = Vertices[indices[0]].position;
     float3 B = Vertices[indices[1]].position;
     float3 C = Vertices[indices[2]].position;
     float3 portal_dir = GetNormal(A, B, C);
-    float3 triangleNormal = { -1,0,0 };
+    float3 triangleNormal = portal_dir;//{ 0,0,-1 };
 
     RayDesc portal_ray;
     portal_ray.Origin = portal_origin;
@@ -195,7 +196,7 @@ void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     RayPayload portal_payload = { float4(0, 0, 0, 0) };
 
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, portal_ray, portal_payload);
-    payload.color += portal_payload.color;
+    payload.color = portal_payload.color;
 }
 
 [shader("miss")]
