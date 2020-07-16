@@ -20,10 +20,13 @@ public:
 	XMVECTOR GetPosition() { return position; }
 	XMVECTOR GetRotation() { return rotation; }
 	XMVECTOR GetScale() { return scale; }
+	void SetModelName(std::string name);
+	std::string GetModelName() { return model_name; }
 	void SetPosition(XMVECTOR pos) { position = pos; }
 	void SetRotation(XMVECTOR rot) { rotation = rot; }
 	void SetScale(XMVECTOR sca) { scale = sca; }
 private:
+	std::string model_name;
 	std::vector<Index> model_indices;
 	std::vector<Vertex> model_vertices;
 	XMVECTOR position;

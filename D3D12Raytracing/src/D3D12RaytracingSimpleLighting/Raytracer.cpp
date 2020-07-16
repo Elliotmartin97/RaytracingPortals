@@ -8,8 +8,11 @@
 using namespace DirectX;
 
 const wchar_t* Raytracer::c_hitGroupName = L"MyHitGroup";
+
 const wchar_t* Raytracer::c_raygenShaderName = L"MyRaygenShader";
-const wchar_t* Raytracer::c_closestHitShaderName = L"MyClosestHitShader";
+const wchar_t* Raytracer::c_closestHitShaderNames = L"MyClosestHitShader";
+
+
 const wchar_t* Raytracer::c_missShaderName = L"MyMissShader";
 
 Raytracer::Raytracer(UINT heap_index)
@@ -111,7 +114,7 @@ void Raytracer::CreateRaytracingPipelineStateObject()
     // In this sample, this could be ommited for convenience since the sample uses all shaders in the library. 
     {
         lib->DefineExport(c_raygenShaderName);
-        lib->DefineExport(c_closestHitShaderName);
+        lib->DefineExport(c_closestHitShaderNames);
         lib->DefineExport(c_missShaderName);
     }
 
@@ -119,9 +122,11 @@ void Raytracer::CreateRaytracingPipelineStateObject()
     // A hit group specifies closest hit, any hit and intersection shaders to be executed when a ray intersects the geometry's triangle/AABB.
     // In this sample, we only use triangle geometry with a closest hit shader, so others are not set.
     auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
-    hitGroup->SetClosestHitShaderImport(c_closestHitShaderName);
+    hitGroup->SetClosestHitShaderImport(c_closestHitShaderNames);
     hitGroup->SetHitGroupExport(c_hitGroupName);
     hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
+
+
 
     // Shader config
     // Defines the maximum sizes in bytes for the ray payload and attribute structure.
@@ -144,7 +149,7 @@ void Raytracer::CreateRaytracingPipelineStateObject()
     auto pipelineConfig = raytracingPipeline.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
     // PERFOMANCE TIP: Set max recursion depth as low as needed 
     // as drivers may apply optimization strategies for low recursion depths.
-    UINT maxRecursionDepth = 1; // ~ primary rays only. 
+    UINT maxRecursionDepth = 2; // ~ primary rays only. 
     pipelineConfig->Config(maxRecursionDepth);
 
 #if _DEBUG
@@ -360,7 +365,9 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
     ShaderTable hitGroupShaderTable(device, numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
     for (int i = 0; i < hitgroup_counts; i++)
     {
-        hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
+        auto& hitgroup_id = hitGroupShaderIdentifier;
+
+        hitGroupShaderTable.push_back(ShaderRecord(hitgroup_id, shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
     }
     m_hitGroupShaderTable = hitGroupShaderTable.GetResource();
     

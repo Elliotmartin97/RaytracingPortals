@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include "Raytracer.h"
+#include "Portal.h"
 
 int Scene::GetSceneModelCount(std::string filename)
 {
@@ -49,8 +50,22 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
                 std::istringstream iss(line);
                 std::string model_filename;
                 iss >> model_filename >> posx >> posy >> posz >> rotx >> roty >> rotz >> scax >> scay >> scaz;
+
+
                 Model model;
-                model.LoadModelFromPLY(model_filename, scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
+                model.SetModelName(model_filename);
+
+                if (model_filename == "portal")
+                {
+                    model.LoadModelFromPLY("planeback", scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
+                    portal = new Portal();
+                    portal->SetPortalModel(model);
+                }
+                else
+                {
+                    model.LoadModelFromPLY(model_filename, scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
+                }
+
                 XMFLOAT3 position_float3 = XMFLOAT3(posx, posy, posz);
                 XMFLOAT3 rotation_float3 = XMFLOAT3(XMConvertToRadians(rotx), XMConvertToRadians(roty), XMConvertToRadians(rotz));
                 XMFLOAT3 scale_float3 = XMFLOAT3(scax, scay, scaz);
@@ -68,4 +83,10 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
     }
 
     file.close();
+}
+
+Scene::~Scene()
+{
+    delete portal;
+    portal = nullptr;
 }

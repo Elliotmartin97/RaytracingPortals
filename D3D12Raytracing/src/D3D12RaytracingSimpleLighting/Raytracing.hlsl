@@ -87,9 +87,12 @@ float4 CalculateDiffuseLighting(float3 hitPosition, float3 normal)
     float3 pixelToLight = normalize(g_sceneCB.lightPosition.xyz - hitPosition);
 
     // Diffuse contribution.
-    float fNDotL = max(0.0f, dot(pixelToLight, normal));
-
-    return g_cubeCB.albedo * g_sceneCB.lightDiffuseColor * fNDotL;
+    float fNDotL = dot(pixelToLight, normal);
+    if (fNDotL > 0)
+    {
+        return g_cubeCB.albedo * g_sceneCB.lightDiffuseColor * fNDotL;
+    }
+    return 0;
 }
 
 [shader("raygeneration")]
@@ -120,6 +123,7 @@ void MyRaygenShader()
 [shader("closesthit")]
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
+
     float3 hitPosition = HitWorldPosition();
 
     // Get the base index of the triangle's first 16 bit index.
@@ -147,6 +151,51 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float4 color = g_sceneCB.lightAmbientColor + diffuseColor;
 
     payload.color = color;
+}
+
+float3 GetNormal(float3 v0, float3 v1, float3 v2)
+{
+    float3 U = v1 - v0;
+    float3 V = v2 - v0;
+    float3 normal = { (U.y * V.z) - (U.z * V.y), (U.z * V.x) - (U.x * V.z), (U.x * V.y) - (U.y * V.x) };
+    return normal;
+}
+
+[shader("closesthit")]
+void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
+{
+    //hit and triangle info
+    float3 hit_position = HitWorldPosition();
+
+    uint indexSizeInBytes = 2;
+    uint indicesPerTriangle = 3;
+    uint triangleIndexStride = indicesPerTriangle * indexSizeInBytes;
+    uint baseIndex = PrimitiveIndex() * triangleIndexStride;
+    const uint3 indices = Load3x16BitIndices(baseIndex);
+
+    float3 vertexNormals[3] = {
+    Vertices[indices[0]].normal,
+    Vertices[indices[1]].normal,
+    Vertices[indices[2]].normal
+    };
+
+    float3 portal_origin = hit_position;
+    float3 A = Vertices[indices[0]].position;
+    float3 B = Vertices[indices[1]].position;
+    float3 C = Vertices[indices[2]].position;
+    float3 portal_dir = GetNormal(A, B, C);
+    float3 triangleNormal = { -1,0,0 };
+
+    RayDesc portal_ray;
+    portal_ray.Origin = portal_origin;
+    portal_ray.Direction = triangleNormal;
+
+    portal_ray.TMin = 0.001;
+    portal_ray.TMax = 10000.0;
+    RayPayload portal_payload = { float4(0, 0, 0, 0) };
+
+    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, portal_ray, portal_payload);
+    payload.color += portal_payload.color;
 }
 
 [shader("miss")]

@@ -17,6 +17,7 @@
 #include "Model.h"
 #include "Scene.h"
 #include "Camera.h"
+#include "Portal.h"
 
 using namespace std;
 using namespace DX;
@@ -60,6 +61,16 @@ void D3D12RaytracingSimpleLighting::OnInit()
     CreateWindowSizeDependentResources();
 }
 
+void D3D12RaytracingSimpleLighting::SetWindowCenterPositions(int x, int y)
+{
+    window_center_x = x;
+    window_center_y = y;
+    if (camera != nullptr)
+    {
+        camera->SetMouseCenterPosition(x, y);
+    }
+}
+
 // Initialize scene rendering parameters.
 void D3D12RaytracingSimpleLighting::InitializeScene()
 {
@@ -70,16 +81,12 @@ void D3D12RaytracingSimpleLighting::InitializeScene()
         raytracer->GetCubeCB().albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    // Setup camera.
-    {
-        // Initialize the view and projection inverse matrices.
-        camera->SetPosition(0.0f, 2.0f, -9.0f, 1.0f);
-        camera->SetTarget(0.0f, 0.0f, 0.0f, 1.0f);
-        camera->SetupCamera();
-
-        
-        camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
-    }
+    camera->SetProjectionMatrix(60.0f, m_aspectRatio, 1.0f, 125.0f);
+    camera->SetPositionFloat(0.0f, 0.0f, -10.0f);
+    camera->SetRotationFloat(0.0f, 0.0f, 0.0f);
+    camera->SetMouseCenterPosition(0, 0);
+    camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
+    
 
     // Setup lights.
     {
@@ -88,10 +95,10 @@ void D3D12RaytracingSimpleLighting::InitializeScene()
         XMFLOAT4 lightAmbientColor;
         XMFLOAT4 lightDiffuseColor;
 
-        lightPosition = XMFLOAT4(4.0f, 0.0f, 0.0, 0.0f);
+        lightPosition = XMFLOAT4(-3.5f, 0.0f, 0.0, 0.0f);
         raytracer->GetSceneCB()[frameIndex].lightPosition = XMLoadFloat4(&lightPosition);
-
-        lightAmbientColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+ 
+        lightAmbientColor = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
         raytracer->GetSceneCB()[frameIndex].lightAmbientColor = XMLoadFloat4(&lightAmbientColor);
 
         lightDiffuseColor = XMFLOAT4(0.0f, 0.5f, 0.0f, 1.0f);
@@ -119,12 +126,8 @@ void D3D12RaytracingSimpleLighting::CreateDeviceDependentResources()
     // Create a raytracing pipeline state object which defines the binding of shaders, state and resources to be used during raytracing.
     raytracer->CreateRaytracingPipelineStateObject();
 
-    // Create a heap for descriptors.
     raytracer->CreateDescriptorHeap(m_deviceResources.get(), scene->GetSceneModelCount("Scenes/Scene0.txt"));
-    // Build geometry to be used in the sample.
     scene->LoadScene(m_deviceResources.get(), raytracer, "Scenes/scene0.txt");
-
-   // raytracer->BuildGeometryBuffers(m_deviceResources.get(), raytracer, scene);
 
     acceleration_structure->BuildAccelerationStructures(raytracer, m_deviceResources.get(), scene);
 
@@ -159,23 +162,49 @@ void D3D12RaytracingSimpleLighting::OnUpdate()
     auto prevFrameIndex = m_deviceResources->GetPreviousFrameIndex();
 
     // Rotate the camera around Y axis.
-    {
-   /*     float secondsToRotateAround = 56.0f;
-        float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
-        XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(angleToRotateBy));
-        camera->RotatePosition(rotate);
-        camera->RotateTarget(rotate);
-        camera->RotateUp(rotate);
-        camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);*/
-    }
+
+    float secondsToRotateAround = 10.0f;
+    float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
+    camera->UpdateCameraMatrices(m_deviceResources.get(), raytracer, m_aspectRatio);
 
     // Rotate the second light around Y axis.
     {
         float secondsToRotateAround = 8.0f;
-        float angleToRotateBy = -360.0f * (elapsedTime / secondsToRotateAround);
+        float time = (elapsedTime / secondsToRotateAround);
         XMMATRIX rotate = XMMatrixRotationY(XMConvertToRadians(angleToRotateBy));
         const XMVECTOR& prevLightPosition = raytracer->GetSceneCB()[prevFrameIndex].lightPosition;
         raytracer->GetSceneCB()[frameIndex].lightPosition = XMVector3Transform(prevLightPosition, rotate);
+        //float move = 10.0f;
+        //XMMATRIX translate = XMMatrixTranslation(move * time, 0.0f, 0.0f);
+        //const XMVECTOR& prevLightPosition = raytracer->GetSceneCB()[prevFrameIndex].lightPosition;
+        //raytracer->GetSceneCB()[frameIndex].lightPosition = XMVector3Transform(prevLightPosition, translate);
+    }
+}
+
+void D3D12RaytracingSimpleLighting::OnMouseMove(UINT x, UINT y) 
+{
+    camera->UpdateMouseXY(x, y);
+    float elapsedTime = static_cast<float>(m_timer.GetElapsedSeconds());
+    camera->UpdateMouseCameraRotation(elapsedTime);
+}
+
+void D3D12RaytracingSimpleLighting::OnKeyDown(UINT8 key)
+{
+    if (key == 'W')
+    {
+        camera->MoveForward();
+    }
+    if (key == 'S')
+    {
+        camera->MoveBackward();
+    }
+    if (key == 'A')
+    {
+        camera->MoveLeftward();
+    }
+    if (key == 'D')
+    {
+        camera->MoveRightward();
     }
 }
 

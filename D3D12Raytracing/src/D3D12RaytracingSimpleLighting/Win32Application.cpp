@@ -57,7 +57,9 @@ int Win32Application::Run(DXSample* pSample, HINSTANCE hInstance, int nCmdShow)
 
         // Initialize the sample. OnInit is defined in each child-implementation of DXSample.
         pSample->OnInit();
-
+        int win_posx = (GetSystemMetrics(SM_CXSCREEN) - windowRect.right) / 2;
+        int win_posy = (GetSystemMetrics(SM_CYSCREEN) - windowRect.bottom) / 2;
+        SetWindowPos(m_hwnd, 0, win_posx, win_posy, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
         ShowWindow(m_hwnd, nCmdShow);
 
         // Main sample loop.
@@ -197,6 +199,13 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
     return 0;
 
     case WM_KEYDOWN:
+
+        if (static_cast<UINT8>(wParam) == static_cast<UINT8>(27))
+        {
+            PostQuitMessage(0);
+            return 0;
+        }
+
         if (pSample)
         {
             pSample->OnKeyDown(static_cast<UINT8>(wParam));
@@ -237,6 +246,11 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
             RECT windowRect = {};
             GetWindowRect(hWnd, &windowRect);
             pSample->SetWindowBounds(windowRect.left, windowRect.top, windowRect.right, windowRect.bottom);
+            SetCursorPos(windowRect.left + (pSample->GetWidth() / 2), windowRect.top + (pSample->GetHeight() / 2));
+            POINT point;
+            GetCursorPos(&point);
+            pSample->SetWindowCenterPositions(point.x, point.y);
+            ShowCursor(false);
 
             RECT clientRect = {};
             GetClientRect(hWnd, &clientRect);
@@ -250,7 +264,8 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
             RECT windowRect = {};
             GetWindowRect(hWnd, &windowRect);
             pSample->SetWindowBounds(windowRect.left, windowRect.top, windowRect.right, windowRect.bottom);
-
+            pSample->SetWindowCenterPositions(windowRect.left + (pSample->GetWidth() / 2), windowRect.top + (pSample->GetHeight() / 2));
+            SetCursorPos(windowRect.left + (pSample->GetWidth() / 2), windowRect.top + (pSample->GetHeight() / 2));
             int xPos = (int)(short)LOWORD(lParam);
             int yPos = (int)(short)HIWORD(lParam);
             pSample->OnWindowMoved(xPos, yPos);
@@ -265,12 +280,16 @@ LRESULT CALLBACK Win32Application::WindowProc(HWND hWnd, UINT message, WPARAM wP
         return 0;
 
     case WM_MOUSEMOVE:
-        if (pSample && static_cast<UINT8>(wParam) == MK_LBUTTON)
-        {
-            UINT x = LOWORD(lParam);
-            UINT y = HIWORD(lParam);
-            pSample->OnMouseMove(x, y);
-        }
+    {
+        RECT windowRect = {};
+        GetWindowRect(hWnd, &windowRect);
+        POINT mouse_point;
+        GetCursorPos(&mouse_point);
+        UINT x = mouse_point.x;
+        UINT y = mouse_point.y;
+        pSample->OnMouseMove(x, y);
+        SetCursorPos(windowRect.left + (pSample->GetWidth() / 2), windowRect.top + (pSample->GetHeight() / 2));
+    }
         return 0;
 
     case WM_LBUTTONDOWN:

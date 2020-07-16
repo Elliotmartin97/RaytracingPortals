@@ -25,6 +25,9 @@ public:
     virtual void OnRender();
     virtual void OnSizeChanged(UINT width, UINT height, bool minimized);
     virtual void OnDestroy();
+    void OnMouseMove(UINT x, UINT y) override;
+    void OnKeyDown(UINT8 key) override;
+    void SetWindowCenterPositions(int x, int y) override;
     virtual IDXGISwapChain* GetSwapchain() { return m_deviceResources->GetSwapChain(); }
 
 private:
@@ -59,4 +62,6 @@ private:
     AccelerationStructure* acceleration_structure;
     Scene* scene;
     Camera* camera;
+    int window_center_x = 0;
+    int window_center_y = 0;
 };

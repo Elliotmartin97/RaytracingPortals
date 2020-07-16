@@ -35,6 +35,7 @@ public:
     virtual void OnLeftButtonDown(UINT /*x*/, UINT /*y*/) {}
     virtual void OnLeftButtonUp(UINT /*x*/, UINT /*y*/) {}
     virtual void OnDisplayChanged() {}
+    virtual void SetWindowCenterPositions(int x, int y) {};
 
     // Overridable members.
     virtual void ParseCommandLineArgs(_In_reads_(argc) WCHAR* argv[], int argc);

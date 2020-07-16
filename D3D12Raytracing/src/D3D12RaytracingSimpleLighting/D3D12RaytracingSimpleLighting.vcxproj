@@ -164,6 +164,7 @@
     <ClInclude Include="DirectXRaytracingHelper.h" />
     <ClInclude Include="HlslCompat.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Portal.h" />
     <ClInclude Include="Raytracer.h" />
     <ClInclude Include="RaytracingHlslCompat.h" />
     <ClInclude Include="Scene.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Portal.cpp" />
     <ClCompile Include="Raytracer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Win32Application.cpp" />
