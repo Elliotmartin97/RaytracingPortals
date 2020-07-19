@@ -1,8 +1,8 @@
 # Scene file
 # Scene Name: scene0
-% ModelCount: 14
+% ModelCount: 15
 # Format: Model name, PositionXYZ, RotationXYZ, ScaleXYZ
-pyramid5faces -7.83 0 -0.31 0 0 0 0.5 0.5 0.5 
+pyramid5faces -7.63 0 0.5 0 0 0 0.5 0.5 0.5 
 cube 1.05 -0.25 0 0 0 0 0.5 0.5 0.5 
 planeright -3 0 1 0 0 0 1 2 3 
 planeright -10 0 4 0 0 0 1 2 6 
@@ -15,4 +15,5 @@ planeback -3.5 0 -2 0 0 0 0.5 2 1
 planeback -3.5 0 10 0 0 0 6.5 2 1 
 planeup -3.5 -2 4 0 0 0 6.5 1 6 
 planedown -3.5 2 4 0 0 0 6.5 1 6 
-portal 0 0 8.49 0 0 0 1 1 1 
+portalback 0.38 0 8.49 0 0 0 1 1 1 
+portalback -7.27 0 8.49 0 0 0 1 1 1 

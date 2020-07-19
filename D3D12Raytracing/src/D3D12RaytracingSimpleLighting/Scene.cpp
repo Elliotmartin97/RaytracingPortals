@@ -4,7 +4,6 @@
 #include <fstream>
 #include <algorithm>
 #include "Raytracer.h"
-#include "Portal.h"
 
 int Scene::GetSceneModelCount(std::string filename)
 {
@@ -55,11 +54,14 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
                 Model model;
                 model.SetModelName(model_filename);
 
-                if (model_filename == "portal")
+                if (model_filename == "portalback")
                 {
                     model.LoadModelFromPLY("planeback", scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
-                    portal = new Portal();
-                    portal->SetPortalModel(model);
+                    Portal portal;
+                    XMFLOAT3 origin_float3 = XMFLOAT3(posx, posy, posz);
+                    portal.SetPortalModel(model);
+                    portal.SetPortalOrigin(origin_float3);
+                    scene_portals.push_back(portal);
                 }
                 else
                 {
@@ -83,10 +85,4 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
     }
 
     file.close();
-}
-
-Scene::~Scene()
-{
-    delete portal;
-    portal = nullptr;
 }

@@ -11,6 +11,7 @@ StructuredBuffer<Vertex> Vertices : register(t2, space0);
 
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 ConstantBuffer<CubeConstantBuffer> g_cubeCB : register(b1);
+ConstantBuffer<PortalSlot> g_portalCB : register(b2);
 
 // Load three 16 bit indices from a byte addressed buffer.
 uint3 Load3x16BitIndices(uint offsetBytes)
@@ -165,7 +166,6 @@ float3 GetNormal(float3 v0, float3 v1, float3 v2)
 void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
     //hit and triangle info
-    float3 hit_position = HitWorldPosition();
 
     uint indexSizeInBytes = 2;
     uint indicesPerTriangle = 3;
@@ -179,17 +179,22 @@ void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     Vertices[indices[2]].normal
     };
 
-    float3 reverse = { hit_position.x * -1, hit_position.y,hit_position.z };
-    float3 portal_origin = reverse;
+    float3 hit_position = HitWorldPosition();
+
+    float3 localhit = hit_position - g_cubeCB.origin_position;
+
+    float3 portalposition = g_portalCB.link_position + localhit;
+
     float3 A = Vertices[indices[0]].position;
     float3 B = Vertices[indices[1]].position;
     float3 C = Vertices[indices[2]].position;
-    float3 portal_dir = GetNormal(A, B, C);
-    float3 triangleNormal = portal_dir;//{ 0,0,-1 };
+    float3 portal_dir = -WorldRayDirection();//normalize(GetNormal(A, B, C));
+    portal_dir.x *= -1;
+    portal_dir.y *= -1;
 
     RayDesc portal_ray;
-    portal_ray.Origin = portal_origin;
-    portal_ray.Direction = triangleNormal;
+    portal_ray.Origin = portalposition;
+    portal_ray.Direction = portal_dir;
 
     portal_ray.TMin = 0.001;
     portal_ray.TMax = 10000.0;

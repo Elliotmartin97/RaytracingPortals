@@ -14,6 +14,7 @@ namespace GlobalRootSignatureParams {
 namespace LocalRootSignatureParams {
 	enum Value {
 		CubeConstantSlot = 0,
+		PortalSlot,
 		VertexBuffersSlot,
 		Count
 	};
@@ -28,10 +29,12 @@ union AlignedSceneConstantBuffer
 struct RootArguments
 {
 	CubeConstantBuffer constant_buffer;
+	PortalSlot portal_slot;
 	UINT64 gpu_handle;
 };
 
 class Scene;
+class Portal;
 
 class Raytracer
 {
@@ -47,7 +50,7 @@ public:
 	void CreateDescriptorHeap(DX::DeviceResources* device_resources, int buffer_count);
 	void CreateConstantBuffers(DX::DeviceResources* device_resources);
 	void DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width, UINT height, ComPtr<ID3D12Resource> m_topLevelAccelerationStructure);
-	void BuildShaderTables(DX::DeviceResources* device_resources);
+	void BuildShaderTables(DX::DeviceResources* device_resources, std::vector<Portal> portal_origins);
 	void ReleaseRaytracerResources();
 	void CopyRaytracingOutputToBackbuffer(DX::DeviceResources* device_resources);
 	//void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene *scene);
@@ -91,6 +94,7 @@ private:
 	std::vector<D3DBuffer> m_vertexBuffer;
 	SceneConstantBuffer m_sceneCB[FrameCount];
 	CubeConstantBuffer m_cubeCB;
+	PortalSlot m_portalCB;
 	AlignedSceneConstantBuffer* m_mappedConstantData;
 	ComPtr<ID3D12Resource>       m_perFrameConstants;
 	UINT hitGroupShaderTableStrideInBytes = 0;

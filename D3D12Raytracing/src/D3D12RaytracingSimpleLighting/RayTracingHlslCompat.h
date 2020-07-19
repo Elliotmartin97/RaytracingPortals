@@ -33,6 +33,12 @@ struct SceneConstantBuffer
 struct CubeConstantBuffer
 {
     XMFLOAT4 albedo;
+    XMFLOAT3 origin_position;
+};
+
+struct PortalSlot
+{
+    XMFLOAT3 link_position;
 };
 
 struct Vertex

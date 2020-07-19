@@ -95,7 +95,7 @@ void D3D12RaytracingSimpleLighting::InitializeScene()
         XMFLOAT4 lightAmbientColor;
         XMFLOAT4 lightDiffuseColor;
 
-        lightPosition = XMFLOAT4(-3.5f, 0.0f, 0.0, 0.0f);
+        lightPosition = XMFLOAT4(-7.5f, 0.0f, 0.0, 0.0f);
         raytracer->GetSceneCB()[frameIndex].lightPosition = XMLoadFloat4(&lightPosition);
  
         lightAmbientColor = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
@@ -136,7 +136,7 @@ void D3D12RaytracingSimpleLighting::CreateDeviceDependentResources()
     raytracer->CreateConstantBuffers(m_deviceResources.get());
 
     // Build shader tables, which define shaders and their local root arguments.
-    raytracer->BuildShaderTables(m_deviceResources.get());
+    raytracer->BuildShaderTables(m_deviceResources.get(), scene->GetScenePortals());
 
     // Create an output 2D texture to store the raytracing result to.
     raytracer->CreateRaytracingOutputResource(m_deviceResources.get(), m_width, m_height);

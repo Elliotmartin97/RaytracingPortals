@@ -4,6 +4,7 @@
 #include "Raytracing.hlsl.h"
 #include "RayTracingHlslCompat.h"
 #include "Scene.h"
+#include "Portal.h"
 
 using namespace DirectX;
 
@@ -55,10 +56,11 @@ void Raytracer::CreateRootSignatures(DX::DeviceResources *device_resources)
         globalParams[GlobalRootSignatureParams::SceneConstantSlot].InitAsConstantBufferView(0);
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(globalParams), globalParams);
         SerializeAndCreateRaytracingRootSignature(device_resources, globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
-    
+
         // Local Root Signature
         CD3DX12_ROOT_PARAMETER localParams[LocalRootSignatureParams::Count];
         localParams[LocalRootSignatureParams::CubeConstantSlot].InitAsConstants(SizeOfInUint32(m_cubeCB), 1);
+        localParams[LocalRootSignatureParams::PortalSlot].InitAsConstants(SizeOfInUint32(m_portalCB), 2);
         localParams[LocalRootSignatureParams::VertexBuffersSlot].InitAsDescriptorTable(1, &ranges[1]);
         CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(localParams), localParams);
         localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
@@ -310,7 +312,7 @@ void Raytracer::DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width,
 
 }
 
-void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
+void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources, std::vector<Portal> portals)
 {
     auto device = device_resources->GetD3DDevice();
 
@@ -358,10 +360,30 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
     //needs redoing for performance
     int hitgroup_counts = m_indexBuffer.size();
     std::vector<RootArguments> root_arguments;
+
+    CubeConstantBuffer CubeCB1, CubeCB2;
+    PortalSlot portal1_CB, portal2_CB;
+    CubeCB1.albedo = m_cubeCB.albedo;
+    CubeCB1.origin_position = portals[0].GetPortalOrigin();
+    portal1_CB.link_position = portals[1].GetPortalOrigin();
+    CubeCB2.albedo = m_cubeCB.albedo;
+    CubeCB2.origin_position = portals[1].GetPortalOrigin();
+    portal2_CB.link_position = portals[0].GetPortalOrigin();
+
     for (int i = 0; i < hitgroup_counts; i++)
     {
         RootArguments new_root;
         new_root.constant_buffer = m_cubeCB;
+        if (i == 13)
+        {
+            new_root.constant_buffer = CubeCB1;
+            new_root.portal_slot = portal1_CB;
+        }
+        if (i == 14)
+        {
+            new_root.constant_buffer = CubeCB2;
+            new_root.portal_slot = portal2_CB;
+        }
         new_root.gpu_handle = m_indexBuffer[i].gpuDescriptorHandle.ptr;
         root_arguments.push_back(new_root);
     }
@@ -378,13 +400,15 @@ void Raytracer::BuildShaderTables(DX::DeviceResources* device_resources)
     ShaderTable hitGroupShaderTable(device, numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
     for (int i = 0; i < hitgroup_counts; i++)
     {
-        auto& hitgroup_id = hitGroupShaderIdentifier[0];
-        if (i == 13)
+        
+        if (i == 13 || i == 14)
         {
-            hitgroup_id = hitGroupShaderIdentifier[1];
+            hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier[1], shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
         }
-
-        hitGroupShaderTable.push_back(ShaderRecord(hitgroup_id, shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
+        else
+        {
+            hitGroupShaderTable.push_back(ShaderRecord(hitGroupShaderIdentifier[0], shaderIdentifierSize, &root_arguments[i], sizeof(root_arguments[i])));
+        }
     }
     m_hitGroupShaderTable = hitGroupShaderTable.GetResource();
     

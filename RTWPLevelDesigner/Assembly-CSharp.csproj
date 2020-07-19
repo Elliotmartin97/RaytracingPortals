@@ -63,6 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\SaveSceneToFile.cs" />
+    <Compile Include="Assets\raytest.cs" />
+    <None Include="Assets\CreatedScenes\scene0.txt" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/Ellio/source/repos/RaytracingPortals/RTWPLevelDesigner/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>

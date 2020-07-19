@@ -1,14 +1,13 @@
 #pragma once
 #include "stdafx.h"
 #include "Model.h"
-
-class Portal;
+#include "Portal.h"
 
 class Scene
 {
 public:
     Scene() = default;
-    ~Scene();
+    ~Scene() = default;
     int GetSceneModelCount(std::string filename);
 	void LoadScene(DX::DeviceResources* device_resources, Raytracer* raytracer, std::string filename);
 	std::vector<Model> GetSceneModels() { return scene_models; }
@@ -18,8 +17,9 @@ public:
     std::vector<int> GetVertexCounts() { return vertex_counts; }
     std::vector<int> GetIndexLocations() { return index_locations; }
     std::vector<int> GetVertexLocations() { return vertex_locations; }
+    std::vector<Portal> GetScenePortals() { return scene_portals; }
 private:
-    Portal* portal;
+    std::vector<Portal> scene_portals;
 	std::vector<Model> scene_models;
     std::vector<Index> scene_indices;
     std::vector<Vertex> scene_vertices;
