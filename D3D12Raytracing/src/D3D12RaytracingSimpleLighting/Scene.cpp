@@ -54,9 +54,9 @@ void Scene::LoadScene(DX::DeviceResources* device_resources, Raytracer* raytrace
                 Model model;
                 model.SetModelName(model_filename);
 
-                if (model_filename == "portalback")
+                if (model_filename == "portalsphere")
                 {
-                    model.LoadModelFromPLY("planeback", scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
+                    model.LoadModelFromPLY("sphere", scene_indices, scene_vertices, index_counts, vertex_counts, index_locations, vertex_locations);
                     Portal portal;
                     XMFLOAT3 origin_float3 = XMFLOAT3(posx, posy, posz);
                     portal.SetPortalModel(model);

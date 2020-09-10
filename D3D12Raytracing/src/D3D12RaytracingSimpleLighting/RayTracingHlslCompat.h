@@ -30,7 +30,7 @@ struct SceneConstantBuffer
     XMVECTOR lightDiffuseColor;
 };
 
-struct CubeConstantBuffer
+struct ObjectConstantBuffer
 {
     XMFLOAT4 albedo;
     XMFLOAT3 origin_position;

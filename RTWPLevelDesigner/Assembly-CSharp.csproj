@@ -2,8 +2,6 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
-    <CscToolPath>C:\Program Files\Unity\Hub\Editor\2019.3.7f1\Editor\Data\Tools\RoslynScripts</CscToolPath>
-    <CscToolExe>unity_csc.bat</CscToolExe>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -54,6 +52,9 @@
     <UnityVersion>2019.3.7f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2019.3.7f1\Editor\Data\Managed/UnityEngine/UnityEngine.dll</HintPath>
     </Reference>
@@ -62,9 +63,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\PlayerCamera.cs" />
+    <Compile Include="Assets\PortalScript.cs" />
+    <Compile Include="Assets\RotatorLight.cs" />
     <Compile Include="Assets\SaveSceneToFile.cs" />
     <Compile Include="Assets\raytest.cs" />
-    <None Include="Assets\CreatedScenes\scene0.txt" />
+    <None Include="Assets\Shaders\PortalShader.shader" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/Ellio/source/repos/RaytracingPortals/RTWPLevelDesigner/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>

@@ -45,9 +45,6 @@
     <ClInclude Include="DeviceResources.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
-    <ClInclude Include="D3D12RaytracingSimpleLighting.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DirectXRaytracingHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -75,6 +72,9 @@
     <ClInclude Include="RaytracingHlslCompat.h">
       <Filter>Assets\Shaders\Util</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -91,9 +91,6 @@
     </ClCompile>
     <ClCompile Include="DeviceResources.cpp">
       <Filter>Source Files\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="D3D12RaytracingSimpleLighting.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Raytracer.cpp">
       <Filter>Source Files</Filter>
@@ -113,9 +110,11 @@
     <ClCompile Include="Portal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="readme.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

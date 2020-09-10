@@ -16,9 +16,9 @@ public:
 
 	
 	void ReleaseStructures();
-	ComPtr<ID3D12Resource> GetTopLevelStructure() { return m_topLevelAccelerationStructure; }
+	ComPtr<ID3D12Resource> GetTopLevelStructure() { return top_level_acceleration_structure; }
 private:
 	// Acceleration structure
-	std::vector<ComPtr<ID3D12Resource>> m_bottomLevelAccelerationStructure;
-	ComPtr<ID3D12Resource> m_topLevelAccelerationStructure;
+	std::vector<ComPtr<ID3D12Resource>> bottom_level_acceleration_structure;
+	ComPtr<ID3D12Resource> top_level_acceleration_structure;
 };

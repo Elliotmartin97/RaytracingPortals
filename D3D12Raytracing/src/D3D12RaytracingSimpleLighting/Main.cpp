@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "D3D12RaytracingSimpleLighting.h"
+#include "Graphics.h"
 
 _Use_decl_annotations_
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
-    D3D12RaytracingSimpleLighting sample(1280, 720, L"D3D12 Raytracing - Simple Lighting");
+    Graphics sample(1280, 720, L"Raytracing With Portals");
     return Win32Application::Run(&sample, hInstance, nCmdShow);
 }

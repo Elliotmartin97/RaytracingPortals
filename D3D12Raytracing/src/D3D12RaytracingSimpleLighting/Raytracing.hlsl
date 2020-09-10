@@ -10,7 +10,7 @@ ByteAddressBuffer Indices : register(t1, space0);
 StructuredBuffer<Vertex> Vertices : register(t2, space0);
 
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
-ConstantBuffer<CubeConstantBuffer> g_cubeCB : register(b1);
+ConstantBuffer<ObjectConstantBuffer> g_cubeCB : register(b1);
 ConstantBuffer<PortalSlot> g_portalCB : register(b2);
 
 // Load three 16 bit indices from a byte addressed buffer.
@@ -68,13 +68,11 @@ float3 HitAttribute(float3 vertexAttribute[3], BuiltInTriangleIntersectionAttrib
 // Generate a ray in world space for a camera pixel corresponding to an index from the dispatched 2D grid.
 inline void GenerateCameraRay(uint2 index, out float3 origin, out float3 direction)
 {
-    float2 xy = index + 0.5f; // center in the middle of the pixel.
+    float2 xy = index + 0.5f;
     float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
 
-    // Invert Y for DirectX-style coordinates.
     screenPos.y = -screenPos.y;
 
-    // Unproject the pixel coordinate into a ray.
     float4 world = mul(float4(screenPos, 0, 1), g_sceneCB.projectionToWorld);
 
     world.xyz /= world.w;
@@ -87,7 +85,6 @@ float4 CalculateDiffuseLighting(float3 hitPosition, float3 normal)
 {
     float3 pixelToLight = normalize(g_sceneCB.lightPosition.xyz - hitPosition);
 
-    // Diffuse contribution.
     float fNDotL = dot(pixelToLight, normal);
     if (fNDotL > 0)
     {
@@ -96,56 +93,46 @@ float4 CalculateDiffuseLighting(float3 hitPosition, float3 normal)
     return 0;
 }
 
+//Generate primary rays from camera
 [shader("raygeneration")]
 void MyRaygenShader()
 {
     float3 rayDir;
     float3 origin;
     
-    // Generate a ray for a camera pixel corresponding to an index from the dispatched 2D grid.
     GenerateCameraRay(DispatchRaysIndex().xy, origin, rayDir);
 
-    // Trace the ray.
-    // Set the ray's extents.
     RayDesc ray;
     ray.Origin = origin;
     ray.Direction = rayDir;
-    // Set TMin to a non-zero small value to avoid aliasing issues due to floating - point errors.
-    // TMin should be kept small to prevent missing geometry at close contact areas.
     ray.TMin = 0.001;
     ray.TMax = 10000.0;
     RayPayload payload = { float4(0, 0, 0, 0) };
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, ray, payload);
 
-    // Write the raytraced color to the output texture.
     RenderTarget[DispatchRaysIndex().xy] = payload.color;
 }
 
+//default shader for diffuse lighting
 [shader("closesthit")]
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
 
     float3 hitPosition = HitWorldPosition();
 
-    // Get the base index of the triangle's first 16 bit index.
     uint indexSizeInBytes = 2;
     uint indicesPerTriangle = 3;
     uint triangleIndexStride = indicesPerTriangle * indexSizeInBytes;
     uint baseIndex = PrimitiveIndex() * triangleIndexStride;
-
-    // Load up 3 16 bit indices for the triangle.
     const uint3 indices = Load3x16BitIndices(baseIndex);
 
-    // Retrieve corresponding vertex normals for the triangle vertices.
+
     float3 vertexNormals[3] = { 
         Vertices[indices[0]].normal, 
         Vertices[indices[1]].normal, 
         Vertices[indices[2]].normal 
     };
 
-    // Compute the triangle's normal.
-    // This is redundant and done for illustration purposes 
-    // as all the per-vertex normals are the same and match triangle's normal in this sample. 
     float3 triangleNormal = HitAttribute(vertexNormals, attr);
 
     float4 diffuseColor = CalculateDiffuseLighting(hitPosition, triangleNormal);
@@ -162,10 +149,10 @@ float3 GetNormal(float3 v0, float3 v1, float3 v2)
     return normal;
 }
 
+//portal shader
 [shader("closesthit")]
 void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
-    //hit and triangle info
 
     uint indexSizeInBytes = 2;
     uint indicesPerTriangle = 3;
@@ -188,9 +175,8 @@ void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 A = Vertices[indices[0]].position;
     float3 B = Vertices[indices[1]].position;
     float3 C = Vertices[indices[2]].position;
-    float3 portal_dir = -WorldRayDirection();//normalize(GetNormal(A, B, C));
-    portal_dir.x *= -1;
-    portal_dir.y *= -1;
+    float3 portal_dir = WorldRayDirection();  //normalize(GetNormal(A, B, C));
+    portal_dir.z *= -1; //reverse ray z direction to get reflected view from portal
 
     RayDesc portal_ray;
     portal_ray.Origin = portalposition;
@@ -201,9 +187,16 @@ void PortalClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     RayPayload portal_payload = { float4(0, 0, 0, 0) };
 
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, portal_ray, portal_payload);
-    payload.color = portal_payload.color;
+
+    float3 triangleNormal = HitAttribute(vertexNormals, attr);
+
+    float4 diffuseColor = CalculateDiffuseLighting(hit_position, triangleNormal);
+    float4 color = g_sceneCB.lightAmbientColor + diffuseColor;
+    payload.color = portal_payload.color; //WITHOUT DIFFUSE LIGHTING
+    //payload.color = color * portal_payload.color; //WITH DIFFUSE LIGHTING
 }
 
+//miss shader when no object hit
 [shader("miss")]
 void MyMissShader(inout RayPayload payload)
 {

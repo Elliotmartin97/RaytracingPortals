@@ -46,7 +46,7 @@ public:
     const WCHAR* GetTitle() const { return m_title.c_str(); }
     RECT GetWindowsBounds() const { return m_windowBounds; }
     virtual IDXGISwapChain* GetSwapchain() { return nullptr; }
-    DX::DeviceResources* GetDeviceResources() const { return m_deviceResources.get(); }
+    DX::DeviceResources* GetDeviceResources() const { return device_resources.get(); }
 
     void UpdateForSizeChange(UINT clientWidth, UINT clientHeight);
     void SetWindowBounds(int left, int top, int right, int bottom);
@@ -68,7 +68,7 @@ protected:
 
     // D3D device resources
     UINT m_adapterIDoverride;
-    std::unique_ptr<DX::DeviceResources> m_deviceResources;
+    std::unique_ptr<DX::DeviceResources> device_resources;
 
 private:
     // Root assets path.

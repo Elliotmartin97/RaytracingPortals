@@ -1,18 +1,5 @@
-//*********************************************************
-//
-// Copyright (c) Microsoft. All rights reserved.
-// This code is licensed under the MIT License (MIT).
-// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-//
-//*********************************************************
-
 #pragma once
-
 #define SizeOfInUint32(obj) ((sizeof(obj) - 1) / sizeof(UINT32) + 1)
-
 struct AccelerationStructureBuffers
 {
     ComPtr<ID3D12Resource> scratch;
@@ -21,7 +8,7 @@ struct AccelerationStructureBuffers
     UINT64                 ResultDataMaxSizeInBytes;
 };
 
-// Shader record = {{Shader ID}, {RootArguments}}
+// Shader record = Shader ID, RootArguments
 class ShaderRecord
 {
 public:
@@ -57,7 +44,7 @@ public:
     PointerWithSize localRootArguments;
 };
 
-// Shader table = {{ ShaderRecord 1}, {ShaderRecord 2}, ...}
+// Shader table = ShaderRecord 1, ShaderRecord 2,
 class ShaderTable : public GpuUploadBuffer
 {
     uint8_t* m_mappedShaderRecords;

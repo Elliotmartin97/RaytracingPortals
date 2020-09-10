@@ -14,7 +14,7 @@
     <ProjectGuid>{A0848C98-F5AA-431C-9E76-7F1E7EFA368C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>D3D12Raytracing</RootNamespace>
-    <ProjectName>D3D12RaytracingSimpleLighting</ProjectName>
+    <ProjectName>RaytracingWithPortals</ProjectName>
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -170,7 +170,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Win32Application.h" />
-    <ClInclude Include="D3D12RaytracingSimpleLighting.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DXSample.h" />
     <ClInclude Include="DXSampleHelper.h" />
@@ -185,7 +185,7 @@
     <ClCompile Include="Raytracer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Win32Application.cpp" />
-    <ClCompile Include="D3D12RaytracingSimpleLighting.cpp" />
+    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="DXSample.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -213,7 +213,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="readme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

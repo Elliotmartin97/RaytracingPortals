@@ -28,7 +28,7 @@ union AlignedSceneConstantBuffer
 
 struct RootArguments
 {
-	CubeConstantBuffer constant_buffer;
+	ObjectConstantBuffer constant_buffer;
 	PortalSlot portal_slot;
 	UINT64 gpu_handle;
 };
@@ -49,53 +49,53 @@ public:
 	void CreateRaytracingOutputResource(DX::DeviceResources* device_resources, UINT64 width, UINT64 height);
 	void CreateDescriptorHeap(DX::DeviceResources* device_resources, int buffer_count);
 	void CreateConstantBuffers(DX::DeviceResources* device_resources);
-	void DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width, UINT height, ComPtr<ID3D12Resource> m_topLevelAccelerationStructure);
+	void DoRaytracing(DX::DeviceResources* device_resourcecs, UINT width, UINT height, ComPtr<ID3D12Resource> TLAS);
 	void BuildShaderTables(DX::DeviceResources* device_resources, std::vector<Portal> portal_origins);
 	void ReleaseRaytracerResources();
 	void CopyRaytracingOutputToBackbuffer(DX::DeviceResources* device_resources);
 	//void BuildGeometryBuffers(DX::DeviceResources* device_resources, Raytracer* raytracer, Scene *scene);
 	UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse = UINT_MAX);
 	UINT CreateBufferSRV(DX::DeviceResources* device_resources, D3DBuffer* buffer, UINT numElements, UINT elementSize);
-	ComPtr<ID3D12Device5> GetDXRDevice() { return m_dxrDevice; }
-	ComPtr<ID3D12GraphicsCommandList5> GetCMDList() { return m_dxrCommandList; }
-	ComPtr<ID3D12StateObject> GetStateObject() { return m_dxrStateObject; }
-	CubeConstantBuffer& GetCubeCB() { return m_cubeCB; }
-	SceneConstantBuffer* GetSceneCB() { return m_sceneCB; }
-	UINT GetFrameCount() { return FrameCount; }
-	std::vector<D3DBuffer> GetIndexBuffers() { return m_indexBuffer; }
-	std::vector<D3DBuffer> GetVertexBuffers() { return m_vertexBuffer; }
-	D3DBuffer* GetIndexBufferByIndex(int idx) { return &m_indexBuffer[idx]; }
-	D3DBuffer* GetVertexBufferByIndex(int idx) { return &m_vertexBuffer[idx]; }
-	void AddBufferSlot() { m_indexBuffer.resize(m_indexBuffer.size() + 1); m_vertexBuffer.resize(m_vertexBuffer.size() + 1); }
-	ComPtr<ID3D12Resource> GetRaytracingOutput() { return m_raytracingOutput; }
-	UINT GetShaderHitGroupStride() { return hitGroupShaderTableStrideInBytes; }
+	ComPtr<ID3D12Device5> GetDXRDevice() { return dxr_device; }
+	ComPtr<ID3D12GraphicsCommandList5> GetCMDList() { return dxr_commandList; }
+	ComPtr<ID3D12StateObject> GetStateObject() { return dxr_state_object; }
+	ObjectConstantBuffer& GetCubeCB() { return object_constant_buffer; }
+	SceneConstantBuffer* GetSceneCB() { return scene_constant_buffers; }
+	UINT GetFrameCount() { return FRAME_COUNT; }
+	std::vector<D3DBuffer> GetIndexBuffers() { return index_buffer; }
+	std::vector<D3DBuffer> GetVertexBuffers() { return vertex_buffer; }
+	D3DBuffer* GetIndexBufferByIndex(int idx) { return &index_buffer[idx]; }
+	D3DBuffer* GetVertexBufferByIndex(int idx) { return &vertex_buffer[idx]; }
+	void AddBufferSlot() { index_buffer.resize(index_buffer.size() + 1); vertex_buffer.resize(vertex_buffer.size() + 1); }
+	ComPtr<ID3D12Resource> GetRaytracingOutput() { return raytracing_output; }
+	UINT GetShaderHitGroupStride() { return hit_group_stride_in_bytes; }
 private:
 
-	static const UINT FrameCount = 3;
-	ComPtr<ID3D12Device5> m_dxrDevice;
-	ComPtr<ID3D12GraphicsCommandList5> m_dxrCommandList;
-	ComPtr<ID3D12StateObject> m_dxrStateObject;
-	ComPtr<ID3D12RootSignature> m_raytracingGlobalRootSignature;
-	ComPtr<ID3D12RootSignature> m_raytracingLocalRootSignature;
-	ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
-	ComPtr<ID3D12Resource> m_raytracingOutput;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_raytracingOutputResourceUAVGpuDescriptor;
+	static const UINT FRAME_COUNT = 3;
+	ComPtr<ID3D12Device5> dxr_device;
+	ComPtr<ID3D12GraphicsCommandList5> dxr_commandList;
+	ComPtr<ID3D12StateObject> dxr_state_object;
+	ComPtr<ID3D12RootSignature> raytracing_global_root_signature;
+	ComPtr<ID3D12RootSignature> raytracing_local_root_signature;
+	ComPtr<ID3D12DescriptorHeap> descriptor_heap;
+	ComPtr<ID3D12Resource> raytracing_output;
+	D3D12_GPU_DESCRIPTOR_HANDLE raytracing_output_resource_UAV_gpu_descriptor;
 	UINT descriptor_heap_index;
-	UINT m_descriptorsAllocated;
-	UINT m_descriptorSize;
-	static const wchar_t* c_hitGroupName[];
-	static const wchar_t* c_raygenShaderName;
-	static const wchar_t* c_closestHitShaderNames[];
-	static const wchar_t* c_missShaderName;
-	ComPtr<ID3D12Resource> m_missShaderTable;
-	ComPtr<ID3D12Resource> m_hitGroupShaderTable;
-	ComPtr<ID3D12Resource> m_rayGenShaderTable;
-	std::vector<D3DBuffer> m_indexBuffer;
-	std::vector<D3DBuffer> m_vertexBuffer;
-	SceneConstantBuffer m_sceneCB[FrameCount];
-	CubeConstantBuffer m_cubeCB;
-	PortalSlot m_portalCB;
-	AlignedSceneConstantBuffer* m_mappedConstantData;
-	ComPtr<ID3D12Resource>       m_perFrameConstants;
-	UINT hitGroupShaderTableStrideInBytes = 0;
+	UINT descriptors_allocated;
+	UINT descriptor_size;
+	static const wchar_t* hit_group_name[];
+	static const wchar_t* raygen_shader_name;
+	static const wchar_t* closest_hit_shader_names[];
+	static const wchar_t* miss_shader_name;
+	ComPtr<ID3D12Resource> miss_shader_table;
+	ComPtr<ID3D12Resource> hit_group_shader_table;
+	ComPtr<ID3D12Resource> ray_gen_shader_table;
+	std::vector<D3DBuffer> index_buffer;
+	std::vector<D3DBuffer> vertex_buffer;
+	SceneConstantBuffer scene_constant_buffers[FRAME_COUNT];
+	ObjectConstantBuffer object_constant_buffer;
+	PortalSlot portal_constant_buffer;
+	AlignedSceneConstantBuffer* mapped_constant_data;
+	ComPtr<ID3D12Resource> per_frame_constants;
+	UINT hit_group_stride_in_bytes = 0;
 };

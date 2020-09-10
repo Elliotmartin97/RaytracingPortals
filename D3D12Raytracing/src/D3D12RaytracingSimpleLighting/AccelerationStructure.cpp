@@ -75,13 +75,6 @@ AccelerationStructureBuffers AccelerationStructure::BuildTopLevelAS(DX::DeviceRe
 
     AllocateUAVBuffer(device, topLevelPrebuildInfo.ScratchDataSizeInBytes, &scratch, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"ScratchResource");
 
-    // Allocate resources for acceleration structures.
-    // Acceleration structures can only be placed in resources that are created in the default heap (or custom heap equivalent). 
-    // Default heap is OK since the application doesn’t need CPU read/write access to them. 
-    // The resources that will contain acceleration structures must be created in the state D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, 
-    // and must have resource flag D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS. The ALLOW_UNORDERED_ACCESS requirement simply acknowledges both: 
-    //  - the system will be doing this type of access in its implementation of acceleration structure builds behind the scenes.
-    //  - from the app point of view, synchronization of writes/reads to acceleration structures is accomplished using UAV barriers.
     {
         D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
         AllocateUAVBuffer(device, topLevelPrebuildInfo.ResultDataMaxSizeInBytes, &topLevelAS, initialResourceState, L"TopLevelAccelerationStructure");
@@ -99,11 +92,11 @@ AccelerationStructureBuffers AccelerationStructure::BuildTopLevelAS(DX::DeviceRe
     
 
     // Top-level AS desc
-    {
-        topLevelBuildDesc.DestAccelerationStructureData = topLevelAS->GetGPUVirtualAddress();
-        topLevelInputs.InstanceDescs = instanceDescsResource->GetGPUVirtualAddress();
-        topLevelBuildDesc.ScratchAccelerationStructureData = scratch->GetGPUVirtualAddress();
-    }
+    
+    topLevelBuildDesc.DestAccelerationStructureData = topLevelAS->GetGPUVirtualAddress();
+    topLevelInputs.InstanceDescs = instanceDescsResource->GetGPUVirtualAddress();
+    topLevelBuildDesc.ScratchAccelerationStructureData = scratch->GetGPUVirtualAddress();
+    
 
     // Build acceleration structure.
     raytracer->GetCMDList()->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
@@ -138,18 +131,13 @@ AccelerationStructureBuffers AccelerationStructure::BuildBottomLevelAS(DX::Devic
 
     // Create a scratch buffer.
     AllocateUAVBuffer(device, bottomLevelPrebuildInfo.ScratchDataSizeInBytes, &scratch, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"ScratchResource");
-
-    {
-        D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-        AllocateUAVBuffer(device, bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes, &bottomLevelAS, initialResourceState, L"BottomLevelAccelerationStructure");
-    }
-
+    D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+    AllocateUAVBuffer(device, bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes, &bottomLevelAS, initialResourceState, L"BottomLevelAccelerationStructure");
+    
     // bottom-level AS desc.
-    {
-        bottomLevelBuildDesc.ScratchAccelerationStructureData = scratch->GetGPUVirtualAddress();
-        bottomLevelBuildDesc.DestAccelerationStructureData = bottomLevelAS->GetGPUVirtualAddress();
-    }
-
+    bottomLevelBuildDesc.ScratchAccelerationStructureData = scratch->GetGPUVirtualAddress();
+    bottomLevelBuildDesc.DestAccelerationStructureData = bottomLevelAS->GetGPUVirtualAddress();
+    
     // Build the acceleration structure.
     raytracer->GetCMDList()->BuildRaytracingAccelerationStructure(&bottomLevelBuildDesc, 0, nullptr);
 
@@ -168,7 +156,7 @@ void AccelerationStructure::BuildAccelerationStructures(Raytracer* raytracer, DX
     auto commandAllocator = device_resources->GetCommandAllocator();
 
     int num_objects = scene->GetIndexCounts().size();
-    m_bottomLevelAccelerationStructure.resize(num_objects);
+    bottom_level_acceleration_structure.resize(num_objects);
     // Reset the command list for the acceleration structure construction.
     commandList->Reset(commandAllocator, nullptr);
 
@@ -195,27 +183,22 @@ void AccelerationStructure::BuildAccelerationStructures(Raytracer* raytracer, DX
 
     // Build top-level AS.
     AccelerationStructureBuffers topLevelAS = BuildTopLevelAS(device_resources, raytracer, scene, bottomLevelAS);
-
-    // Kick off acceleration structure construction.
     device_resources->ExecuteCommandList();
-
-    // Wait for GPU to finish as the locally created temporary GPU resources will get released once we go out of scope.
     device_resources->WaitForGpu();
 
-    // Store the AS buffers. The rest of the buffers will be released once we exit the function.
     for (UINT i = 0; i < num_objects; i++)
     {
-        m_bottomLevelAccelerationStructure[i] = bottomLevelAS[i].accelerationStructure;
+        bottom_level_acceleration_structure[i] = bottomLevelAS[i].accelerationStructure;
     }
-    m_topLevelAccelerationStructure = topLevelAS.accelerationStructure;
+    top_level_acceleration_structure = topLevelAS.accelerationStructure;
 }
 
 
 void AccelerationStructure::ReleaseStructures()
 {
-    for (int i = 0; i < m_bottomLevelAccelerationStructure.size(); i++)
+    for (int i = 0; i < bottom_level_acceleration_structure.size(); i++)
     {
-        m_bottomLevelAccelerationStructure[i].Reset();
+        bottom_level_acceleration_structure[i].Reset();
     }
-    m_topLevelAccelerationStructure.Reset();
+    top_level_acceleration_structure.Reset();
 }
